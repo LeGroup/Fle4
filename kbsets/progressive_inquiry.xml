@@ -1,0 +1,65 @@
+<?xml version="1.0" ?>
+<KnowledgeTypes encoding="utf-8"><KnowledgeTypeSet Original="Progressive Inquiry" ID="pitt" Language="English" Name="Progressive Inquiry"><Description>Learning can be seen as a research practice aiming to solve a group's
+understanding of a subject by creating a visible discussion of research
+challenges, theories, scientific facts and summaries. The process aims to
+be progressive in its approach by starting from initial problems and ideas
+of the students and then becoming progressively more challenging through
+creation of more elaborate problems, theories and research practices.
+
+The Progressive Inquiry knowledge types aim to scaffold a learning community
+to follow the process of setting up research problems, making current
+knowledge visible and working from there to deepen the understanding on
+the issue by creating discussion notes. The reading and writing of these
+notes is seen as the key momentum of the process, helping learners to
+structure their ideas based on the principle of scientific research.
+</Description><StartingTypes><KnowledgeTypeRef ID-REF="problem"/></StartingTypes><FollowupRule><KnowledgeTypeRef ID-REF="problem"/><KnowledgeTypeRef ID-REF="problem"/><KnowledgeTypeRef ID-REF="my_expl"/><KnowledgeTypeRef ID-REF="sci_expl"/><KnowledgeTypeRef ID-REF="evaluation"/><KnowledgeTypeRef ID-REF="summary"/></FollowupRule><FollowupRule><KnowledgeTypeRef ID-REF="my_expl"/><KnowledgeTypeRef ID-REF="problem"/><KnowledgeTypeRef ID-REF="my_expl"/><KnowledgeTypeRef ID-REF="sci_expl"/><KnowledgeTypeRef ID-REF="evaluation"/><KnowledgeTypeRef ID-REF="summary"/></FollowupRule><FollowupRule><KnowledgeTypeRef ID-REF="sci_expl"/><KnowledgeTypeRef ID-REF="problem"/><KnowledgeTypeRef ID-REF="my_expl"/><KnowledgeTypeRef ID-REF="sci_expl"/><KnowledgeTypeRef ID-REF="evaluation"/><KnowledgeTypeRef ID-REF="summary"/></FollowupRule><FollowupRule><KnowledgeTypeRef ID-REF="evaluation"/><KnowledgeTypeRef ID-REF="problem"/><KnowledgeTypeRef ID-REF="my_expl"/><KnowledgeTypeRef ID-REF="sci_expl"/><KnowledgeTypeRef ID-REF="evaluation"/><KnowledgeTypeRef ID-REF="summary"/></FollowupRule><FollowupRule><KnowledgeTypeRef ID-REF="summary"/><KnowledgeTypeRef ID-REF="problem"/><KnowledgeTypeRef ID-REF="my_expl"/><KnowledgeTypeRef ID-REF="sci_expl"/><KnowledgeTypeRef ID-REF="evaluation"/><KnowledgeTypeRef ID-REF="summary"/></FollowupRule><KnowledgeType Colour="#FFFFAD" ID="problem" Name="Problem"><Icon LocalName="data1" ContentType="image/gif"/><StartingPhrase>I would like to find out why/how...
+I am interested in studying why/how...</StartingPhrase><Description>Your study problem in research. The learning process aims at answering
+to the problems presented by the students. The purpose of defining a
+problem statement is to explicate your learning goals, to explain your
+research interests and also to introduce the questions that are
+directing your inquiry. After critically viewing the present working
+theories and by introducing new deepening knowledge to the discussion,
+also new subordinate problems can be defined.</Description><Checklist>Are you introducing the problems that &lt;b&gt;you are interested in&lt;/b&gt; studying?
+
+Are you explaining your &lt;b&gt;research interests&lt;/b&gt;?
+
+Give explanations to your problem in another note.</Checklist></KnowledgeType><KnowledgeType Colour="#C5E2D5" ID="my_expl" Name="My Explanation"><Icon LocalName="data2" ContentType="image/gif"/><StartingPhrase>I think that...
+I believe that...</StartingPhrase><Description> My Explanation presents your own conceptions (hypothesis, theory,
+explanation, interpretation) about the problems presented by yourself or
+some of your fellow students. "My Explanation" is not necessarily well
+defined or articulated early in the inquiry process. However, it is
+crucial that the explication of your explanations evolves during the
+process and your working theories become more refined and developed.</Description><Checklist>Are you presenting &lt;b&gt;your own thinking&lt;/b&gt; (notion, hypothesis, theory, explanation or interpretation)?
+
+&lt;b&gt;Don't finalize&lt;/b&gt; your explanation. Post more elaborated versions later.
+
+If you have knowledge from an information source, you should write a "Scientific explanation".</Checklist></KnowledgeType><KnowledgeType Colour="#FFE1AA" ID="sci_expl" Name="Scientific Explanation"><Icon LocalName="data3" ContentType="image/gif"/><StartingPhrase>I have found some information...</StartingPhrase><Description>Scientific Explanation presents some scientific findings or other
+knowledge that you have sought. Under  Scientific Explanation  you may
+brings to the discussion some new points of view or otherwise helps the
+inquiry process to continue. It differs from your own explanation (My
+Explanation) in that it represents knowledge produced by others,
+generally some authority or expert. My Explanations should be your own
+ideas where as Scientific Explanation is some ones else idea in the area
+in concern.</Description><Checklist>Are you including &lt;b&gt;information provided by an expert&lt;/b&gt; in the domain?
+
+Does the explanation &lt;b&gt;connect to the problems and explanations&lt;/b&gt; you have posted?
+
+Remember to mention &lt;b&gt;where you found the information&lt;/b&gt; (book, article, web site, TV programme, lecture, discussion).</Checklist></KnowledgeType><KnowledgeType Colour="#DCCAFF" ID="evaluation" Name="Evaluation of the Process"><Icon LocalName="data4" ContentType="image/gif"/><StartingPhrase>I think that our ideas...
+I think that our learning process...</StartingPhrase><Description>Your comment that focuses on the inquiry process and its methods
+instead of the process outcomes - meta-comment. With a "Evaluation of
+the Process" you may evaluate e.g. whether the process is progressing in
+the desired direction, whether appropriate methods are used, how sharing
+of tasks and inquiry process is accomplished among the members of the
+learning community.</Description><Checklist>Are you talking about &lt;b&gt;organizing the work&lt;/b&gt; of your group?
+
+Have you expressed &lt;b&gt;your opinion&lt;/b&gt; on how the learning process is advancing?
+
+Are you &lt;b&gt;sharing tasks&lt;/b&gt; or &lt;b&gt;discussing the methods&lt;/b&gt; used?</Checklist></KnowledgeType><KnowledgeType Colour="#DCFC98" ID="summary" Name="Summary"><Icon LocalName="data5" ContentType="image/gif"/><StartingPhrase>We have learned that...
+We came up with the conclusion that...</StartingPhrase><Description>With a summary you draw pieces of the discussion together and provide
+inferences based on the discussion in the Knowledge Building. The
+summary may aim at identifying a new Course Context or may reflect the
+views of the writer on the progression of the inquiry learning process.</Description><Checklist>Have you &lt;b&gt;reviewed all the notes&lt;/b&gt; in the thread?
+
+Are you &lt;b&gt;drawing together discussions&lt;/b&gt; carried out in the thread?
+
+Are you &lt;b&gt;explaining what you've learned&lt;/b&gt; about the topics that were initially stated?</Checklist></KnowledgeType></KnowledgeTypeSet></KnowledgeTypes>

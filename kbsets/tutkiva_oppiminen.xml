@@ -1,0 +1,73 @@
+<?xml version="1.0" ?>
+<KnowledgeTypes encoding="utf-8"><KnowledgeTypeSet Original="Progressive Inquiry" ID="pitt_fi" Language="suomi" Name="Tutkiva oppiminen"><Description>Oppiminen voidaan nähdä tutkimuksena, joka tähtää yksilön ja ryhmän ymmärryksen parantamiseen. Tähän voidaan pyrkiä keskustelemalla avoimesti tutkimushaasteista, teorioista, omista ideoista ja muualta löydetystä tieteellisestä tiedosta. Prosessin tarkoituksena on edetä porrastetusti kohti kehittyneempiä käsityksiä ja haasteellisempia tutkimusongelmia sekä niiden ratkaisuja. Tarkoituksena on kuitenkin aloittaa opiskelijoiden omista ongelmista ja käsityksistä ja kehittää näitä eteenpäin keskustelemalla esitettyjen ajatustyyppien avulla.
+
+Tutkiva oppiminen -ajattelutyypistö auttaa oppijoita jakamaan omat käsisitykset ongelmiksi, teorioiksi, muualta löydetyksi tieteelliseksi tiedoksi, prosessia organisoiviksi kommenteiksi ja yhteenvedoiksi. Näiden keskusteluviestien lukeminen ja kirjoittaminen auttaa opiskelijoita käsittelemään aiheen haasteita ja oppimisprosessia tieteellisen prosessin mukaisesti. Oman ajattelun jäsentäminen, ajatusten tuominen julki itselle ja muille viesteinä ja näiden viestien käsittely nähdään siis prosessin päätavoitteena ja sen tuloksena syntyy kehittyneempi ymmärrys aiheesta.
+</Description><StartingTypes><KnowledgeTypeRef ID-REF="ong"/></StartingTypes><FollowupRule><KnowledgeTypeRef ID-REF="ong"/><KnowledgeTypeRef ID-REF="ong"/><KnowledgeTypeRef ID-REF="teoria"/><KnowledgeTypeRef ID-REF="tieto"/><KnowledgeTypeRef ID-REF="org"/><KnowledgeTypeRef ID-REF="yht"/></FollowupRule><FollowupRule><KnowledgeTypeRef ID-REF="teoria"/><KnowledgeTypeRef ID-REF="ong"/><KnowledgeTypeRef ID-REF="teoria"/><KnowledgeTypeRef ID-REF="tieto"/><KnowledgeTypeRef ID-REF="org"/><KnowledgeTypeRef ID-REF="yht"/></FollowupRule><FollowupRule><KnowledgeTypeRef ID-REF="tieto"/><KnowledgeTypeRef ID-REF="ong"/><KnowledgeTypeRef ID-REF="teoria"/><KnowledgeTypeRef ID-REF="tieto"/><KnowledgeTypeRef ID-REF="org"/><KnowledgeTypeRef ID-REF="yht"/></FollowupRule><FollowupRule><KnowledgeTypeRef ID-REF="org"/><KnowledgeTypeRef ID-REF="ong"/><KnowledgeTypeRef ID-REF="teoria"/><KnowledgeTypeRef ID-REF="tieto"/><KnowledgeTypeRef ID-REF="org"/><KnowledgeTypeRef ID-REF="yht"/></FollowupRule><FollowupRule><KnowledgeTypeRef ID-REF="yht"/><KnowledgeTypeRef ID-REF="ong"/><KnowledgeTypeRef ID-REF="teoria"/><KnowledgeTypeRef ID-REF="tieto"/><KnowledgeTypeRef ID-REF="org"/><KnowledgeTypeRef ID-REF="yht"/></FollowupRule><KnowledgeType Colour="#FFFFAD" ID="ong" Name="Tutkimusongelma"><Icon LocalName="data1" ContentType="image/gif"/><StartingPhrase>Haluaisin selvittää, miksi/miten...
+Haluaisin tutkia miksi/miten...</StartingPhrase><Description>Tutkimuksen tarkoituksena on ratkoa ongelmia. Oppimisprosessi tähtää
+oppijoiden omien ongelmien esittämiseen ja ratkaisuiden löytämiseen näihin.
+Ongelman määrittäminen palvelee omien oppimistavoitteiden määrittelyä:
+kirjaamalla ongelmaksi sen, mitä et ymmärrä olet määritellyt tavoitteeksi
+laajentaa ymmärrystäsi ongelman suuntaan.
+
+Kun ensimmäisiä ongelmia on käsitelty omien teorioiden ja muun tarjolla olevan
+tiedon perusteella, ongelmat usen tarkentuvat pienemmiksi ala-ongelmiksi tai
+jopa muuttuvat kokonaan.</Description><Checklist>Oletko esittelemässä ongelmia, joista &lt;b&gt;olet itse kiinnostunut&lt;/b&gt;?
+
+Oletko selittämässä &lt;b&gt;tutkimustavoitteitasi&lt;/b&gt;?
+
+Anna selitykset ongelmaan toisessa viestissä.</Checklist></KnowledgeType><KnowledgeType Colour="#C5E2D5" ID="teoria" Name="Oma teoria"><Icon LocalName="data2" ContentType="image/gif"/><StartingPhrase>Minun mielestäni...
+Minä luulen, että...</StartingPhrase><Description>Oma teoria esitää omat ajatuksesi käsiteltävästä ongelmasta, olivat ne
+sitten valmiita tai omasta mielestäsi aukottomia. Omien teorioiden ei
+siis tarvitse olla täydellisiä, eikä ole mielekästä pantata niitä muilta,
+kunnes ne ovat omasta mielestä virheettömiä.
+
+Ymmärtäminen ja oppiminen jakautuu muiden oppijoiden kanssa, mitä aikaisemmin
+ongelmat ja teoriat jaetaan muiden kanssa selkeinä viesteinä. On kuitenkin
+tärkeää kiinnittää huomiota, että omat teoriasi kehittyvät oppimisprosesin
+aikana ja heijastavat myös muiden ihmisten esittämiä käsityksiä, ongelmia
+ja teorioita.</Description><Checklist>Oletko kertomassa &lt;b&gt;omasta ajattelustasi&lt;/b&gt; (luulo, hypotesi, teoria, selitys tai tulkinta)?
+
+&lt;b&gt;Älä viimeistele&lt;/b&gt; selitystäsi. Kirjoita kehitellymmät versiot myöhemmin.</Checklist></KnowledgeType><KnowledgeType Colour="#FFE1AA" ID="tieto" Name="Tieteellinen tieto"><Icon LocalName="data3" ContentType="image/gif"/><StartingPhrase>Olen löytänyt tietoa...</StartingPhrase><Description>Tieteellinen tieto edustaa tutkittavan aiheen hyvää tieteellistä
+ymmärrystä tai alan yleistä näkemystä. Tieteellisen tiedon avulla
+voidaan keskusteluun tuoda uusia asioita, jotka voivat tukea tai
+olla ristiriidassa jo esitettyjen teorioiden kanssa.
+
+Tieteellinen tieto on muiden tuottamaa ja tieteellisen
+kriteeristön täyttämää tietoa (teorioita, malleja, kuvauksia), joka
+täydentää ymmärrystä tutkittavasta aiheesta.
+
+Hyvän käytännön mukaista on liittää Tieteellisen tiedon viestiin
+myös käytetty tiedon lähde (lähdeviite).
+</Description><Checklist>Oletko kertomassa alan &lt;b&gt;asiantuntijan antamaa tietoa&lt;/b&gt;?
+
+&lt;b&gt;Liittyykö selitys&lt;/b&gt; lähettämiisi ongelmiin ja selityksiin?
+
+Muista mainita, &lt;b&gt;mistä löysit tiedon&lt;/b&gt; (kirja, artikkeli, www-sivusto, tv-ohjelma, luento, keskustelu).</Checklist></KnowledgeType><KnowledgeType Colour="#DCCAFF" ID="org" Name="Työn organisointi"><Icon LocalName="data4" ContentType="image/gif"/><StartingPhrase>Mielestäni ideamme...
+Mielestäni oppimisprosessimme...</StartingPhrase><Description>Työn organisointia kuvaavat viestit kertovat käsittelevät omaa
+tai ryhmän työskentelyä, eivätkä varsinaisesti käsiteltävää aihetta.
+Tarkoituksena on siis arvioida ja edesauttaa ryhmän toiminnan organisointia
+siihen suuntaan, että se tukee asetettujen ongelmia ymmärtämistä ja
+ratkaisemista syvällisesti ja tehokkaasti.
+
+Organisointiviesti voi käsitellä nykyistä työn etenemisen arviointia,
+käytettävää menetelmäkirjoa, tiedon jakamista tai työnjakoa.
+</Description><Checklist>Käsitteletkö ryhmäsi &lt;b&gt;työn organisointia&lt;/b&gt;?
+
+Oletko ilmaissut &lt;b&gt;mielipiteesi&lt;/b&gt; oppimisprosessin etenemisestä?
+
+Oletko &lt;b&gt;jakamassa tehtäviä&lt;/b&gt; tai &lt;b&gt;keskustelemassa käytetyistä menetelmistä&lt;/b&gt;?</Checklist></KnowledgeType><KnowledgeType Colour="#DCFC98" ID="yht" Name="Yhteenveto"><Icon LocalName="data5" ContentType="image/gif"/><StartingPhrase>Olemme oppineet, että...
+Pääsimme siihen lopputulokseen, että...</StartingPhrase><Description>Yhteenveto tähtää keskustelun keskeisimpien osien tuomiseksi yhteen
+niin, että niistä voidaan esittää yhtenäinen kokonaisuus. Tarkoituksena
+on käydä läpi ainakin alkuongelma, lopulliset käsitellyt ongelmat,
+keskeisimmät teoriat ja lopputulema siitä, mikä aiheen ympärillä on
+oleellista.
+
+Yhteenveto voi olla henkilökohtainen tai pyrkiä tuomaan esiin ryhmän
+yleistä näkemystä. Yhteenvetoja voi myös olla useita, mikäli alkuperäinen
+ongelma on jakautunut useammaksi omaksi alueekseen. Nämä uudet osa-alueet
+voivat yhteenvetoineen toimia uusien kurssikotenkstien aloituksina.
+</Description><Checklist>Oletko &lt;b&gt;kerrannut kaikki viestit&lt;/b&gt; keskustelusta?
+
+Oletko &lt;b&gt;vetämässä yhteen&lt;/b&gt; keskustelun osia?
+
+Oletko &lt;b&gt;selittämässä mitä olet oppinut&lt;/b&gt; alunperin asetetuista ongelmista?</Checklist></KnowledgeType></KnowledgeTypeSet></KnowledgeTypes>
