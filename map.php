@@ -107,50 +107,53 @@ $replies = get_comments(array(
 <?php
 function knbu_get_childs($id, $replies) {
 	global $knowledgeTypes, $knbu_kbsets, $post;
-	echo '<ul '.($id == 0 ? 'id="data" style="display: none"' : '').'
-	data-username="'.get_the_author_meta('display_name', $post->post_author).'" 
-	data-content="'.$post->post_content.'"
-	data-title="'.$post->post_title.'"
-	data-avatar="'.knbu_get_avatar_url( $post->user_id ).'"
-	data-username="'.get_the_author_meta( 'display_name', $post->user_id ).'"
-	data-email="'.$post->user_email.'"
-	data-date="'.date(get_option('date_format').' '.get_option('time_format'), strtotime($post->post_date)).'"
-	data-timestamp="'.strtotime($post->post_date).'"
-	>';
+	
+	$nodes = array(
+			array(	
+				'id' => 0,
+				'parent' => false,
+				'content' => $post->post_content,
+				'avatar' => knbu_get_avatar_url( $post->user_id ),
+				'username' => get_the_author_meta( 'display_name', $post->post_author ),
+				'email' => $post->user_email,
+				'date' => date(get_option('date_format').' '.get_option('time_format'), strtotime($post->post_date)),
+				'timestamp' => strtotime( $post->post_date ),
+				'typeName' => 'Start',
+				'title' => $post->post_title,
+				'static' => true
+			)
+	);
+	
 	foreach($replies as $reply) {
-		if($reply->comment_parent == $id) {		
-			$type = false;
-			$name = 'Unspecified';
-			$color = '#000';
-			$type = get_comment_meta($reply->comment_ID, 'kbtype', true);
-			$anchor = json_decode(get_comment_meta($reply->comment_ID, 'node_position', true));
-			
-			foreach($knbu_kbsets[knbu_get_kbset_for_post(get_the_ID())]->KnowledgeTypeSet->KnowledgeType as $t) {	
-				if($t['ID'] == $type) {
-					$name = $t['Name']; 
-					$color = $t['Colour'];
-				}
+		
+		$type = get_comment_meta($reply->comment_ID, 'kbtype', true);
+		$name = 'Unspecified';
+		$color = '#000';
+		$anchor = json_decode(get_comment_meta($reply->comment_ID, 'node_position', true));
+		
+		foreach($knbu_kbsets[knbu_get_kbset_for_post(get_the_ID())]->KnowledgeTypeSet->KnowledgeType as $t) {	
+			if($t['ID'] == $type) {
+				$name = (string)$t['Name']; 
+				$color = (string)$t['Colour'];
 			}
-			$p = '';
-			echo '<li class="kbtype-'.$type.'" 
-			data-id="'.$reply->comment_ID.'"
-			data-anchor-x="'.$anchor->Y.'"
-			data-anchor-y="'.$anchor->X.'"
-			data-kbtype="'.$type.'"
-			data-additional-parents="'.get_comment_meta($reply->comment_ID, 'knbu_map_additional_parents', true).$p.'"
-			data-kbname="'.$name.'"
-			data-username="'.$reply->comment_author.'"
-			data-content="'.$reply->comment_content.'"
-			data-date="'.date(get_option('date_format').' '.get_option('time_format'), strtotime($reply->comment_date)).'"
-			data-timestamp="'.strtotime($reply->comment_date).'"
-			data-color="'.$color.'"
-			data-title="'.(strlen(get_comment_meta($reply->comment_ID, 'comment_title', true)) > 0 ? get_comment_meta($reply->comment_ID, 'comment_title', true) : '(no title)').'"
-			data-avatar="'.knbu_get_avatar_url($reply->user_id).'">';
-			knbu_get_childs($reply->comment_ID, $replies);
-			echo '</li>';
 		}
+		
+		$nodes[] = array(
+				'id' => $reply->comment_ID,
+				'parent' => $reply->comment_parent,
+				'content' => $reply->comment_content,
+				'avatar' => knbu_get_avatar_url($reply->user_id),
+				'username' => $reply->comment_author,
+				'email' => 'email',
+				'date' => 'date',
+				'timestamp' => strtotime($reply->comment_date),
+				'title' => (strlen(get_comment_meta($reply->comment_ID, 'comment_title', true)) > 0 ? get_comment_meta($reply->comment_ID, 'comment_title', true) : '(no title)'),
+				'typeName' => $name,
+				'anchor' => $anchor,
+				'color' => $color
+			);
 	}
-	echo '</ul>';
+	echo '<script type="text/javascript">var NodesFromServer = '.json_encode($nodes).';</script>';
 }
 
 

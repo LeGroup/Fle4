@@ -5,7 +5,7 @@
 
 	var Canvas, ViewPort;
 	/* Working values: Repulse 15000, Attract 0.001 */
-	var C = { Radius: 14, Stroke: 8, Repulse: 15000 * 3, Attract: 0.001, Ignore_distance: 800 }
+	var C = { Radius: 17, Stroke: 8, Repulse: 15000 * 3, Attract: 0.001, Ignore_distance: 800 }
 	var mouseDown = false;
 	var mousePos;
 	var Nodes = [];
@@ -55,28 +55,8 @@
 		ViewPort.Y = 0;
 		OriginalViewPort = { x: ViewPort.X, y: ViewPort.Y, width: ViewPort.width, height: ViewPort.height }
 		
-		//Add the first element
-		var main = new Node({
-			id: 0, 
-			position: new Vector(Width/2, Height/2), 
-			radius: C.Radius * 1.5, 
-			parent: false, 
-			content: $('#data').attr('data-content'),
-			level: 0,
-			avatar: $('#data').attr('data-avatar'),
-			username: $('#data').attr('data-username'),
-			date: $('#data').attr('data-date'),
-			typeName: 'Start',
-			title: $('#data').attr('data-title'),
-			timestamp: $('#data').attr('data-timestamp')
-		});
-		
-		Nodes[0] = main;
-		//And make its position static
-		main.Static = true;
-		//Loop through the list
-		IterateChildren($('#data'), 1, main);
-		
+		for(var serverNode in NodesFromServer) 
+		{ Nodes[NodesFromServer[serverNode].id] = new Node(NodesFromServer[serverNode]); }
 		
 		for(var i in Nodes) { 
 			Nodes[i].SetParents();
@@ -249,43 +229,7 @@
 		else
 			requestPositionsCalculating = true;
 	}
-
-	function IterateChildren(list, level, parent) {
-		if(list.is('ul')) {
-			list.children('li').each(function(i) {
-				var childCount = list.children('li').size();
-				if(parent)
-					var angle = Vector.Angle(parent.position, Nodes[0].position) + 180;
-				else
-					var angle = 360/childCount * i;
-					
-				var pos = Vector.Diag(30, (15/childCount) * i - 15/2 + angle);
-				pos.Add(parent.position);
-				var main = new Node({
-						id: $(this).attr('data-id'), 
-						position: new Vector(pos.X, pos.Y), 
-						radius: C.Radius, 
-						parent: parent.ID, 
-						content: $(this).attr('data-content'), 
-						type: $(this).attr('data-kbtype'),
-						typeName: $(this).attr('data-kbname'),
-						avatar: $(this).attr('data-avatar'),
-						username: $(this).attr('data-username'),
-						date: $(this).attr('data-date'),
-						timestamp: $(this).attr('data-timestamp'),
-						additionalParents: $(this).attr('data-additional-parents'),
-						color: $(this).attr('data-color'),
-						level: level,
-						title: $(this).attr('data-title'),
-						anchor: { X: $(this).attr('data-anchor-x'), Y: $(this).attr('data-anchor-y') }
-					});
-
-				Nodes[$(this).attr('data-id')] = main;
-				$(this).children('ul').each(function() { IterateChildren($(this), level + 1, main); });
-			});
-		}
-	}
-
+	
 	function CalculatePositions() {
 		
 		// Add nodes that are waiting to be added
@@ -348,7 +292,9 @@
 					
 					if(jNode.Anchor) {
 						var v = AttractiveMovement(jNode.position, jNode.Anchor);
+						repulsive.Multiply(0.1);
 						attractive.Add(v);
+						attractive.Multiply(1);
 					} else {
 						for(var parent in jNode.Parents) {
 							attractive.Add(AttractiveMovement(jNode.position, Nodes[jNode.Parents[parent]].position));
@@ -419,9 +365,6 @@
 			setTimeout(CalculatePositions, 10);
 		else {
 			calculating = false;
-			
-			//for(var i = 0; i < Nodes.length; i++) 
-				//Nodes[i].UpdatePosition();
 				
 			$('#fps').text(Date.now() - totalStart);
 		}
@@ -470,8 +413,13 @@
 		this.ID = args.id;
 		this.Date = args.date;
 		this.parent = parseInt(args.parent);
-		this.position = args.position;
-		this.Radius = args.radius;
+		
+		if(args.anchor)
+			this.position = args.anchor;
+		else
+			this.position = new Vector(Width/2 + Math.random() * 2 - 1, Height/2 + Math.random() * 2 - 1);
+			
+		this.Radius = C.Radius;
 		this.Color = args.color;
 		this.TypeName = args.typeName;
 		this.Content = args.content;
@@ -482,7 +430,8 @@
 		this.Timestamp = args.timestamp;
 		this.movement = new Vector(0, 0);
 		this.Positions = [];
-		console.log(args.anchor);
+		this.Static = args.static;
+
 		if(args.anchor && args.anchor.X && args.anchor.Y) 
 			this.Anchor = args.anchor;
 		
