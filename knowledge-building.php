@@ -609,11 +609,12 @@ function knbu_get_avatar_url($email) {
 }
 
 /* Save node position */
-add_action('wp_ajax_save_node_position', 'knbu_save_node_position');
-add_action('wp_ajax_save_node_position', 'knbu_save_node_position');
+add_action('wp_ajax_nopriv_knbu_save_node_position', 'knbu_save_node_position');
+add_action('wp_ajax_knbu_save_node_position', 'knbu_save_node_position');
 
 function knbu_save_node_position() {
-	echo 'asd';
+	if(is_numeric($_POST['id'])) 
+		update_comment_meta( $_POST['id'], 'node_position', $_POST['node_position'] );
 	die();
 }
 		

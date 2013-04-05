@@ -123,6 +123,7 @@ function knbu_get_childs($id, $replies) {
 			$name = 'Unspecified';
 			$color = '#000';
 			$type = get_comment_meta($reply->comment_ID, 'kbtype', true);
+			$anchor = json_decode(get_comment_meta($reply->comment_ID, 'node_position', true));
 			
 			foreach($knbu_kbsets[knbu_get_kbset_for_post(get_the_ID())]->KnowledgeTypeSet->KnowledgeType as $t) {	
 				if($t['ID'] == $type) {
@@ -133,6 +134,8 @@ function knbu_get_childs($id, $replies) {
 			$p = '';
 			echo '<li class="kbtype-'.$type.'" 
 			data-id="'.$reply->comment_ID.'"
+			data-anchor-x="'.$anchor->Y.'"
+			data-anchor-y="'.$anchor->X.'"
 			data-kbtype="'.$type.'"
 			data-additional-parents="'.get_comment_meta($reply->comment_ID, 'knbu_map_additional_parents', true).$p.'"
 			data-kbname="'.$name.'"

@@ -276,7 +276,8 @@
 						additionalParents: $(this).attr('data-additional-parents'),
 						color: $(this).attr('data-color'),
 						level: level,
-						title: $(this).attr('data-title')
+						title: $(this).attr('data-title'),
+						anchor: { X: $(this).attr('data-anchor-x'), Y: $(this).attr('data-anchor-y') }
 					});
 
 				Nodes[$(this).attr('data-id')] = main;
@@ -328,7 +329,7 @@
 				
 				//Obviously we don't have to calculate forces "between" the same node.
 				if(i == j) continue;
-				if(Grouping == 'discussion') {
+				if(Grouping == 'discussion' && !jNode.Anchor) {
 					//If the node is the another node's child calculate attractive force (child pulls its parent)
 					for(var parent in iNode.Parents) {
 						if(iNode.Parents[parent] == jNode.ID) {
@@ -344,8 +345,14 @@
 			switch(Grouping) {
 				case 'discussion': 
 					// Node's parent pulls the node
-					for(var parent in jNode.Parents) {
-						attractive.Add(AttractiveMovement(jNode.position, Nodes[jNode.Parents[parent]].position));
+					
+					if(jNode.Anchor) {
+						var v = AttractiveMovement(jNode.position, jNode.Anchor);
+						attractive.Add(v);
+					} else {
+						for(var parent in jNode.Parents) {
+							attractive.Add(AttractiveMovement(jNode.position, Nodes[jNode.Parents[parent]].position));
+						}
 					}
 				break;
 				
@@ -475,6 +482,9 @@
 		this.Timestamp = args.timestamp;
 		this.movement = new Vector(0, 0);
 		this.Positions = [];
+		console.log(args.anchor);
+		if(args.anchor && args.anchor.X && args.anchor.Y) 
+			this.Anchor = args.anchor;
 		
 		var node = this;
 		
@@ -526,8 +536,11 @@
 				ResetNodeUpdating();
 			}
 			
-			function stopdrag() { 
-				node.dragged = false; 
+			function stopdrag(e) { 
+				node.dragged = false;
+				
+				saveNodePosition(node, { X: node.SVG.Circle.attr('cx'), Y: node.SVG.Circle.attr('cy') });
+				node.Positions.splice(0, node.Positions.length);
 				ResetNodeUpdating(); 
 			}
 			
@@ -559,6 +572,7 @@
 				}
 				
 			});
+			
 			
 			/* Click events */
 			node.SVG.Circle.click(function(e) {
@@ -621,8 +635,7 @@
 			this.movement.Add(acceleration);
 			this.Positions.push(Vector.Add(this.position, this.movement));
 			
-			console.log(this.Positions);
-			while(this.Positions.length > 1)
+			while(this.Positions.length > 4)
 			{ this.Positions.shift(); }
 			
 			var sumX = 0, sumY = 0;
@@ -838,13 +851,15 @@
 		$(window).mouseup(function() { NavigationButtons = {} }).mouseleave(function() { NavigationButtons = {} });
 	}
 	
-	function saveNodePosition() {
+	function saveNodePosition(node, e) {
+		node.Anchor = new Vector(e.X, e.Y);
 		var url = $('#admin-ajax-url').val();
 		$.post(url, { 
-		
+			id: node.ID,
+			node_position: JSON.stringify(e),
 			action: 'knbu_save_node_position'
 			}, function(response) {
-				console.log(response);
+				
 			});
 	}
 	
