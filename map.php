@@ -44,7 +44,7 @@ $replies = get_comments(array(
 			</ul>
 		</div>
 		<div id="navigation">
-			<div id="zoom"></div>s
+			<div id="zoom"></div>
 			<div id="pan">
 				<div class="left"></div>
 				<div class="right"></div>

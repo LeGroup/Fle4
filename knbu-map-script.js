@@ -400,7 +400,7 @@
 		this.parent = parseInt(args.parent);
 		
 		if(args.anchor)
-			this.position = args.anchor;
+			this.position = { X: args.anchor.X, Y: args.anchor.Y };
 		else if(args.id == 0)
 			this.position = new Vector(0, 0);
 		else
@@ -420,7 +420,7 @@
 		this.Static = args.static;
 
 		if(args.anchor && args.anchor.X && args.anchor.Y) 
-			this.Anchor = args.anchor;
+			this.Anchor = { X: args.anchor.X, Y: args.anchor.Y };
 		
 		var node = this;
 		
@@ -593,6 +593,7 @@
 	}
 	
 	Node.Open = function(node) {
+		console.log(node.Anchor);
 		//Shrink the old selected node to its normal size
 		if(SelectedNode)
 		SelectedNode.SVG.Circle.animate({ r: C.Radius }, 200);
@@ -857,7 +858,7 @@
 	function OpenLinkedNode() {
 		var anchor = window.location.hash.replace('#', '');
 		
-		if(!isNaN(anchor)) {
+		if(!isNaN(anchor) && anchor != "") {
 			Node.Open(Nodes[anchor]);
 		}
 	}
