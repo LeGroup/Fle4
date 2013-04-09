@@ -11,6 +11,7 @@
 	var Nodes = [];
 	var NodesWaiting = [];
 	var KnowledgeTypes = [];
+	var Origin;
 	
 	var NodeCount = 0;
 	var NodesPerKnowledgeType = [];
@@ -28,6 +29,7 @@
 	var AnimateNodeMovement = false;
 	var submitted = false;
 	var draggingNode = false;
+	var nodeDragged;
 	var tries = 0; 
 	var totalStart = 0;
 	var FirstNodeTime, LastNodeTime;
@@ -54,7 +56,7 @@
 		ViewPort.X = 0;
 		ViewPort.Y = 0;
 		OriginalViewPort = { x: ViewPort.X, y: ViewPort.Y, width: ViewPort.width, height: ViewPort.height }
-		
+		Origin = { X: Width/2, Y: Height/2 };
 		for(var serverNode in NodesFromServer) 
 		{ Nodes[NodesFromServer[serverNode].id] = new Node(NodesFromServer[serverNode]); }
 		
@@ -80,7 +82,9 @@
 			KnowledgeTypes.push($(this).text());
 		});
 		
-		$('body').mouseup(function(){ draggingNode = false; });
+		$('body').
+		mouseup(function(){ draggingNode = false; }).
+		mouseleave(function() { releaseNode(); });
 		//Pan and Zoom mouse functionality
 		$('svg').
 			mousedown(function(e) { 
@@ -149,6 +153,9 @@
 		
 		// Trigger node position calculations
 		ResetNodeUpdating();
+		
+		// Auto-open node
+		OpenLinkedNode();
 	}
 	
 	var NavigationButtons = { Left: false, Right: false, Up: false, Down: false };
@@ -192,24 +199,6 @@
 	function panRelease() { 
 		if(true || PanInterval)
 			clearInterval(PanInterval);
-	}
-	
-	function StartNodeDrag(id) {
-		if(draggingNode) return;
-		
-		draggingNode = true;
-		
-		function _drag() {
-			
-			Nodes[id].ChangePosition(mousePos);
-			
-			ResetNodeUpdating();
-			
-			if(draggingNode)
-				setTimeout(_drag, 16);
-		}
-		
-		setTimeout(_drag, 16);
 	}
 	
 	function ResetNodeUpdating() {
@@ -273,6 +262,7 @@
 				
 				//Obviously we don't have to calculate forces "between" the same node.
 				if(i == j) continue;
+				
 				if(Grouping == 'discussion' && !jNode.Anchor) {
 					//If the node is the another node's child calculate attractive force (child pulls its parent)
 					for(var parent in iNode.Parents) {
@@ -293,8 +283,8 @@
 					if(jNode.Anchor) {
 						var v = AttractiveMovement(jNode.position, jNode.Anchor);
 						repulsive.Multiply(0.1);
+						v.Multiply(5);
 						attractive.Add(v);
-						attractive.Multiply(1);
 					} else {
 						for(var parent in jNode.Parents) {
 							attractive.Add(AttractiveMovement(jNode.position, Nodes[jNode.Parents[parent]].position));
@@ -305,11 +295,9 @@
 				case 'knowledgetypes': 
 					for(var t = 0; t < KnowledgeTypes.length; t++) {
 						if(jNode.TypeName == KnowledgeTypes[t]) {
-							var v = new Vector(Width/2, Height/2);
 							
 							// -1 because of the Unspecified type which should contain only the starting post.
-							v.Add(Vector.Diag(500, 360 * (t/(KnowledgeTypes.length - 1))));
-							attractive.Add(AttractiveMovement(jNode.position, v));
+							attractive.Add(AttractiveMovement(jNode.position, Vector.Diag(500, 360 * (t/(KnowledgeTypes.length - 1)))));
 							break;
 						}
 					}
@@ -319,10 +307,7 @@
 					var t = 0;
 					for(var user in NodesPerUser) {
 						if(jNode.Username == user) {
-							var v = new Vector(Width/2, Height/2);
-							
-							v.Add(Vector.Diag(500, 360 * (t/(Users.length))));
-							attractive.Add(AttractiveMovement(jNode.position, v));
+							attractive.Add(AttractiveMovement(jNode.position, Vector.Diag(500, 360 * (t/(Users.length)))));
 							break;
 						}
 						t++;
@@ -330,12 +315,12 @@
 				break;
 				
 				case 'time': 
-					var v = new Vector(Width/2 - timebar * (1 - (jNode.Timestamp - FirstNodeTime) / timespan) + timebar/2, Height/2);
+					var v = new Vector(timebar * ((jNode.Timestamp - FirstNodeTime) / timespan), 0);
 					
 					attractive.Add(AttractiveMovement(jNode.position, v));
 					//repulsive.X *= 0.01;
 					repulsive.Multiply(0.1);
-					attractive.Y *= 0.01;
+					attractive.Y *= 0.1;
 				break;
 			}
 			
@@ -416,8 +401,10 @@
 		
 		if(args.anchor)
 			this.position = args.anchor;
+		else if(args.id == 0)
+			this.position = new Vector(0, 0);
 		else
-			this.position = new Vector(Width/2 + Math.random() * 2 - 1, Height/2 + Math.random() * 2 - 1);
+			this.position = new Vector(Math.random() * 2 - 1, Math.random() * 2 - 1);
 			
 		this.Radius = C.Radius;
 		this.Color = args.color;
@@ -481,7 +468,9 @@
 			function move(dx, dy) { 
 				if(node.Static) return;
 				
-				node.ChangePosition({ x: node.originalpos.x + dx * scale, y: node.originalpos.y + dy * scale }); 
+				draggingNode = true;
+				nodeDragged = node.ID;
+				node.ChangePosition({ x: node.originalpos.x + dx * scale - Origin.X, y: node.originalpos.y + dy * scale - Origin.Y }); 
 				ResetNodeUpdating();
 			}
 			
@@ -498,7 +487,11 @@
 				node.originalpos = { x: node.SVG.Circle.attrs.cx, y: node.SVG.Circle.attrs.cy };
 			}
 			
-			node.SVG.Circle.drag(move, startdrag, stopdrag);
+			this.initDrag = function() {
+				node.SVG.Circle.drag(move, startdrag, stopdrag);
+			}
+			
+			this.initDrag();
 			
 			/* Addtional parents disabled 
 			node.SVG.Circle.onDragOver(function(element) {
@@ -522,61 +515,11 @@
 				
 			});
 			
-			
 			/* Click events */
 			node.SVG.Circle.click(function(e) {
 				if(Vector.DistanceSquared(mouseDownStart.position, { X: mousePos.x, Y: mousePos.y }) > 10 * 10 ) 
 					return;
-				
-				
-				//Shrink the old selected node to its normal size
-				if(SelectedNode)
-					SelectedNode.SVG.Circle.animate({ r: C.Radius }, 200);
-				
-				
-				//Select the selected node
-				SelectedNode = node;
-				SelectedNode.SVG.Circle.animate({ r: C.Radius * 1.5 }, 200);
-				
-				$('#parent-comment-id').val(SelectedNode.ID);
-			
-				//Set message data
-				var msg = $('#message');
-				msg.hide().find('.message-content').text(node.Content);
-				msg.find('.message-type').html(node.TypeName);
-				msg.find('.message-avatar').css({ backgroundImage: 'url(' + node.Avatar + ')' });
-				msg.find('.message-username').text(node.Username);
-				msg.find('.message-coords').text();
-				msg.find('.message-date').text(node.Date);
-				
-				//Get SVG element position relative to HTML document
-				var bounds = node.SVG.Circle.node.getBoundingClientRect();
-				
-				//Position the message box
-				var top, left;
-				if(bounds.left < Width/ 2)
-					left = bounds.right + 10; 
-				else
-					left = bounds.left - msg.width() - 10;
-					
-			
-				top = bounds.top + 10 - msg.height();
-					
-				if(left + msg.width() > Width)
-					left = Width - 50 - msg.width();
-				if(left < 0)
-					left = 10;
-				if(top + msg.height() > Height)
-					top = Height - 50 - msg.height();
-				if(top < 0)
-					top = 10;
-					
-				msg.css({ top: top, left: left });
-				
-				msg.find('.message-header').css({ backgroundColor: node.Color });
-				
-				
-				msg.show(200);
+				Node.Open(node);
 			});
 		}
 		
@@ -596,8 +539,6 @@
 			this.position.X = sumX / this.Positions.length;
 			this.position.Y = sumY / this.Positions.length;
 			
-			//this.position.X += this.movement.X;
-			//this.position.Y += this.movement.Y;
 			this.movement.Multiply(0.0);
 			if(update)
 				this.UpdatePosition();
@@ -611,21 +552,22 @@
 		}
 		
 		this.UpdateConnections = function() {
+			var realPos = new Vector(this.position.X + Origin.X, this.position.Y + Origin.Y);
 			if(this.SVG.Connections) {
 				for(var i = 0; i < this.Parents.length; i++) {
 					//if(!Nodes[this.Parents[i]]) { console.log("Parent doesn't exists!"); continue; }
-					this.SVG.Connections[this.Parents[i]].attr({ path:'M' + this.position.X + ',' + this.position.Y + 'L' + Nodes[this.Parents[i]].position.X + ',' + Nodes[this.Parents[i]].position.Y });
+					this.SVG.Connections[this.Parents[i]].attr({ path:'M' + realPos.X + ',' + realPos.Y + 'L' + (Nodes[this.Parents[i]].position.X + Origin.X) + ',' + (Nodes[this.Parents[i]].position.Y + Origin.Y) });
 				}
 				for(var i = 0; i < this.Children.length; i++) {	
 					//if(!Nodes[this.Children[i]]) { console.log("Child doesn't exists!"); continue; }
-					Nodes[this.Children[i]].SVG.Connections[this.ID].attr({ path:'M' + this.position.X + ',' + this.position.Y + 'L' + Nodes[this.Children[i]].position.X + ',' + Nodes[this.Children[i]].position.Y });
+					Nodes[this.Children[i]].SVG.Connections[this.ID].attr({ path:'M' + realPos.X + ',' + realPos.Y + 'L' + (Nodes[this.Children[i]].position.X + Origin.X) + ',' + (Nodes[this.Children[i]].position.Y + Origin.Y) });
 				}
 			}
 		}
 		this.UpdatePosition = function() {
-			
-			this.SVG.Circle.attr({ cx: this.position.X, cy: this.position.Y });
-			this.SVG.Text.attr({ x: this.position.X + C.Radius + 15, y: this.position.Y });
+			var realPos = new Vector(this.position.X + Origin.X, this.position.Y + Origin.Y);
+			this.SVG.Circle.attr({ cx: realPos.X, cy: realPos.Y });
+			this.SVG.Text.attr({ x: realPos.X + C.Radius + 15, y: realPos.Y });
 			//this.SVG.Date.attr({ x: this.position.X + C.Radius + 15, y: this.position.Y + 7 });
 			this.UpdateConnections();
 		}
@@ -633,7 +575,75 @@
 		this.InitSVG();
 	}
 	
-
+	
+	function releaseNode() {
+		if(!draggingNode) return;
+		
+		Nodes[nodeDragged].SVG.Circle.undrag();
+		Nodes[nodeDragged].initDrag();
+		Nodes[nodeDragged].Anchor = false;
+		
+		draggingNode = false;
+		Nodes[nodeDragged].dragged = false;
+		Nodes[nodeDragged].Positions.splice(0, Nodes[nodeDragged].Positions.length);
+		
+		saveNodePosition(Nodes[nodeDragged], false);
+		
+		nodeDragged = false;
+	}
+	
+	Node.Open = function(node) {
+		//Shrink the old selected node to its normal size
+		if(SelectedNode)
+		SelectedNode.SVG.Circle.animate({ r: C.Radius }, 200);
+		
+		
+		//Select the selected node
+		SelectedNode = node;
+		SelectedNode.SVG.Circle.animate({ r: C.Radius * 1.5 }, 200);
+		
+		$('#parent-comment-id').val(SelectedNode.ID);
+		
+		//Set message data
+		var msg = $('#message');
+		msg.hide().find('.message-content').text(node.Content);
+		msg.find('.message-type').html(node.TypeName);
+		msg.find('.message-avatar').attr({ src: node.Avatar });
+		msg.find('.message-username').text(node.Username);
+		msg.find('.message-date').text(node.Date);
+		msg.find('.message-title').text(node.Title);
+		msg.find('#message-link').attr({ 'href': '#' + node.ID }).text('#'+node.ID);
+		
+		//Get SVG element position relative to HTML document
+		var bounds = node.SVG.Circle.node.getBoundingClientRect();
+		
+		//Position the message box
+		var top, left;
+		if(bounds.left < Width/ 2)
+		left = bounds.right + 10; 
+		else
+		left = bounds.left - msg.width() - 10;
+		
+		
+		top = bounds.top + 10 - msg.height();
+		
+		if(left + msg.width() > Width)
+		left = Width - 50 - msg.width();
+		if(left < 0)
+		left = 10;
+		if(top + msg.height() > Height)
+		top = Height - 50 - msg.height();
+		if(top < 0)
+		top = 10;
+		
+		msg.css({ top: top, left: left });
+		
+		msg.css({ backgroundColor: node.Color });
+		
+		
+		msg.show(200);
+	}
+	
 	Node.Add = function(x, y, Radius, parents, color, id, title, user, date) {
 		var ret = {};
 		
@@ -645,7 +655,7 @@
 		ret.Circle = circle;
 		ret.Connections = [];
 		
-		ret.Text = Canvas.text(x + C.Radius, y - 7, title + '\n' + date + ' \nby ' + user);
+		ret.Text = Canvas.text(x + C.Radius, y - 7, '#'+id + ' - ' + title + '\n' + date + ' \nby ' + user);
 		ret.Text.attr({ fill: '#fff', stroke: 'rgba(0, 0, 0, 0.2)', 'text-anchor': 'start', 'font-size': '8px' });
 		
 		//ret.Date = Canvas.text(x + C.Radius, y + 7, date + ' by ' + user);
@@ -801,7 +811,13 @@
 	}
 	
 	function saveNodePosition(node, e) {
-		node.Anchor = new Vector(e.X, e.Y);
+		e.X -= Origin.X;
+		e.Y -= Origin.Y;
+		
+		if(e)
+			node.Anchor = new Vector(e.X, e.Y);
+		else 
+			node.Anchor = false;
 		var url = $('#admin-ajax-url').val();
 		$.post(url, { 
 			id: node.ID,
@@ -836,6 +852,14 @@
 			return Math.pow(v2.X - v1.X, 2) + Math.pow(v2.Y - v1.Y, 2);
 		}
 		Vector.Distance = function(v1, v2) { return Math.pow(Vector.DistanceSquared(v1, v2), 1/2); }
+	}
+	
+	function OpenLinkedNode() {
+		var anchor = window.location.hash.replace('#', '');
+		
+		if(!isNaN(anchor)) {
+			Node.Open(Nodes[anchor]);
+		}
 	}
 	
 	/* Initialize module when document is ready */

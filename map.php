@@ -44,7 +44,7 @@ $replies = get_comments(array(
 			</ul>
 		</div>
 		<div id="navigation">
-			<div id="zoom"></div>
+			<div id="zoom"></div>s
 			<div id="pan">
 				<div class="left"></div>
 				<div class="right"></div>
@@ -54,26 +54,24 @@ $replies = get_comments(array(
 			</div>
 		</div>
 		<div id="legend">
-		<ul>
-			<?php knbu_get_legends(); ?>
-		</ul>
+			<ul>
+				<?php knbu_get_legends(); ?>
+			</ul>
 		</div>
 	</div>
 	
 	<div id="message">
 		<div class="message-header">
 			<h4 class="message-type"></h4>
+			<img class="message-avatar">
+			<span class="message-username"></span>
+			<br />
+			<a id="message-link">#</a> <span class="message-title"></span>
+			<span class="message-date"></span>
 		</div>
 		<div class="message-content-wrapper">
-			<h3 class="message-title"><span class="message-username">Username</span> <span class="message-date">6:43 pm 12th June 2013</span><div style="clear:both"></div></h3>
-			
-				<div class="message-meta">
-					<div class="message-avatar"></div>
-				</div>
-			<div class="message-content">
-			</div>
+			<div class="message-content"></div>
 			<div style="clear:both"></div>
-		<div class="message-coords"></div>
 		<a class="reply-toggle knbu-form-link" id="open-reply">Reply</a>
 		<div id="reply-wrapper">
 			<form>
@@ -109,19 +107,19 @@ function knbu_get_childs($id, $replies) {
 	global $knowledgeTypes, $knbu_kbsets, $post;
 	
 	$nodes = array(
-			array(	
-				'id' => 0,
-				'parent' => false,
-				'content' => $post->post_content,
-				'avatar' => knbu_get_avatar_url( $post->user_id ),
-				'username' => get_the_author_meta( 'display_name', $post->post_author ),
-				'email' => $post->user_email,
-				'date' => date(get_option('date_format').' '.get_option('time_format'), strtotime($post->post_date)),
-				'timestamp' => strtotime( $post->post_date ),
-				'typeName' => 'Start',
-				'title' => $post->post_title,
-				'static' => true
-			)
+				array(	
+					'id' => 0,
+					'parent' => false,
+					'content' => $post->post_content,
+					'avatar' => knbu_get_avatar_url( $post->user_id ),
+					'username' => get_the_author_meta( 'display_name', $post->post_author ),
+					'email' => $post->user_email,
+					'date' => date(get_option('date_format').' '.get_option('time_format'), strtotime($post->post_date)),
+					'timestamp' => strtotime( $post->post_date ),
+					'typeName' => 'Start',
+					'title' => $post->post_title,
+					'static' => true
+				)
 	);
 	
 	foreach($replies as $reply) {
@@ -144,8 +142,8 @@ function knbu_get_childs($id, $replies) {
 				'content' => $reply->comment_content,
 				'avatar' => knbu_get_avatar_url($reply->user_id),
 				'username' => $reply->comment_author,
-				'email' => 'email',
-				'date' => 'date',
+				'email' => $reply->user_email,
+				'date' => date(get_option('date_format').' '.get_option('time_format'), strtotime($reply->comment_date)),
 				'timestamp' => strtotime($reply->comment_date),
 				'title' => (strlen(get_comment_meta($reply->comment_ID, 'comment_title', true)) > 0 ? get_comment_meta($reply->comment_ID, 'comment_title', true) : '(no title)'),
 				'typeName' => $name,
