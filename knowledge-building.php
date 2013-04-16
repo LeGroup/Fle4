@@ -219,7 +219,7 @@ add_action('comment_post', 'knbu_store_comment');
  */
 function knbu_store_comment($comment) {
 	global $wpdb;
-	if ( !isset( $_POST['knbu_ktype'] ) ) return;
+	if ( !isset( $_POST['knbu_ktype'] ) ) return $comment;
 	$ktype = $_POST['knbu_ktype'];
 	if (is_numeric($comment))
 		$cid = $comment;
@@ -227,6 +227,7 @@ function knbu_store_comment($comment) {
 		$cid = $comment['comment_post_ID'];
 	
 	update_comment_meta( $cid, 'kbtype', $ktype );
+	return $comment;
 }
 
 add_action('comments_array', 'knbu_fetch_ktypes', 10, 2);
@@ -263,6 +264,11 @@ function knbu_fetch_ktypes($comments, $post_id) {
 function knbu_list_comments($args = array(), $comments = null) {
 	global $wp_query;
 
+	if(!knbu_get_kbset_for_post(get_the_ID())) {
+		wp_list_comments($args, $comments);
+		return;
+	}
+	
 ?>
 <div id="comment_sorter">
 	
@@ -276,8 +282,7 @@ Show notes
 </ul>
 </div>
 <div id="map-frame">
-	<iframe src="<?php echo add_query_arg( 'map-view', '1' ); ?>" style="width: 100%; height: 720px;"></iframe>
-	<a href="<?php echo add_query_arg( 'map-view', '1' ); ?>" target="_blank"><?php _e('Open in a new window'); ?></a>
+	<iframe src="<?php echo add_query_arg( array( 'map-view' => '1', 'map-frame' => '1' ) ); ?>" style="width: 100%; height: 720px;"></iframe>
 	</div>
 <div id="comment-frame" style="display: none">
 <?php
@@ -340,7 +345,7 @@ class Walker_KB extends Walker_Comment {
 			?>
 				<<?php echo $tag ?> <?php comment_class(empty( $args['has_children'] ) ? '' : 'parent') ?> id="comment-<?php comment_ID() ?>" data-comment-index="<?php echo ++$comment_index; ?>">
 				<?php if ( 'ul' == $args['style'] ) : ?>
-				<div id="div-comment-<?php comment_ID() ?>" class="comment-body <?php echo ' ' . $ktype['Colour']; ?>">
+				<div id="div-comment-<?php comment_ID() ?>" class="comment-body" style="background-color: <?php echo ' ' . $ktype['Colour']; ?>">
 				<?php endif; ?>
 				<div class="kbtype-label"><?php echo $ktype['Name']; ?></div>
 				<div class="comment-author vcard">
@@ -351,7 +356,8 @@ class Walker_KB extends Walker_Comment {
 				<em><?php _e('Your comment is awaiting moderation.') ?></em>
 				<br />
 <?php endif; ?>
-				<div class="comment-meta commentmetadata"><a href="<?php echo htmlspecialchars( get_comment_link( $comment->comment_ID ) ) ?>"><?php printf(__('%1$s at %2$s'), get_comment_date(),  get_comment_time()) ?></a><?php edit_comment_link(__('(Edit)'),'&nbsp;&nbsp;','') ?></div>
+				<div class="comment-meta commentmetadata">
+					<a href="<?php echo htmlspecialchars( get_comment_link( $comment->comment_ID ) ) ?>" data-stamp="<?php echo strtotime(get_comment_date('Y-m-d').' '.get_comment_time('H:i:s')); ?>"><?php printf(__('%1$s at %2$s'), get_comment_date(),  get_comment_time()) ?></a><?php edit_comment_link(__('(Edit)'),'&nbsp;&nbsp;','') ?></div>
 
 				<?php comment_text() ?>
 

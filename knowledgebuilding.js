@@ -129,8 +129,8 @@ $j(document).ready(function() {
 		
 		case 'by date':
 		coms.sort(function(a,b) {
-			var ca = new Date($j(a).find(".commentmetadata a:first-child").html().replace('at', '')).getTime();
-			var cb = new Date($j(b).find(".commentmetadata a:first-child").html().replace('at', '')).getTime();
+			var ca = $j(a).find(".commentmetadata a:first-child").attr('data-stamp');
+			var cb = $j(b).find(".commentmetadata a:first-child").attr('data-stamp');
 			return (ca < cb) ? -1*sort_order: (ca > cb) ? 1*sort_order : 0;
 		});
 		break;
