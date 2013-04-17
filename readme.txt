@@ -1,5 +1,5 @@
  ===
-Contributors: tatti
+Contributors: tatti, spikefinned
 Donate link: http://fle4.uiah.fi/
 Tags: education, learning, knowledge building, progressive inquiry, comments, discussion, school
 Requires at least: 2.7
@@ -15,6 +15,8 @@ Knowledge Building is a process of collaboratively building new understanding an
 This plugin is primarily meant for use in educational settings, but can of course be used for any meaningful purpose.
 
 This plugin uses the JQuery javascript library, and the jquery.simpledialog plugin for JQuery to streamline the user interface. JQuery is used in noconflict-mode, so this won't disturb a Wordpress installation that uses another javascript library as its default.
+
+For more regular updates see [GitHub](https://github.com/LeGroup/Fle4 "FLE4 GitHub page").
 
 == Installation ==
 

@@ -40,11 +40,7 @@
 	var mouseDownStart = 0;
 
 	var POST;
-	/* If the browser doesn't support javascript console */
-	if(!console)
-		console = { log: function(s) { } }
-	else if(!console.log)
-		console.log = function(s) { }
+	
 	
 	/* Run when document is ready */
 	function Init() {
@@ -624,11 +620,9 @@
 			var realPos = new Vector(this.position.X + Origin.X, this.position.Y + Origin.Y);
 			if(this.SVG.Connections) {
 				for(var i = 0; i < this.Parents.length; i++) {
-					//if(!Nodes[this.Parents[i]]) { console.log("Parent doesn't exists!"); continue; }
 					this.SVG.Connections[this.Parents[i]].attr({ path:'M' + realPos.X + ',' + realPos.Y + 'L' + (Nodes[this.Parents[i]].position.X + Origin.X) + ',' + (Nodes[this.Parents[i]].position.Y + Origin.Y) });
 				}
 				for(var i = 0; i < this.Children.length; i++) {	
-					//if(!Nodes[this.Children[i]]) { console.log("Child doesn't exists!"); continue; }
 					Nodes[this.Children[i]].SVG.Connections[this.ID].attr({ path:'M' + realPos.X + ',' + realPos.Y + 'L' + (Nodes[this.Children[i]].position.X + Origin.X) + ',' + (Nodes[this.Children[i]].position.Y + Origin.Y) });
 				}
 			}
@@ -840,7 +834,6 @@
 				try {
 					response = JSON.parse(response);
 				} catch(e) {
-					console.log(response); 
 				}
 				if(response.Success) {
 					/* Add new node */
@@ -879,7 +872,6 @@
 				}
 				else {
 					submitted = false;
-					console.log('General error message');
 				}
 		});
 	}
