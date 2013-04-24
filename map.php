@@ -1,24 +1,4 @@
 <?php
-function knbu_get_knowledge_type_select() {
-	global $knbu_kbsets;
-	$value = '<select name="knbu_type">
-	<option disabled selected>Select knowledge type</option>';
-	foreach($knbu_kbsets[knbu_get_kbset_for_post(get_the_ID())]->KnowledgeTypeSet->KnowledgeType as $type)
-		$value .= '<option value="'.$type['ID'].'">'.$type['Name'].'</option>';
-	$value .= '</select>';
-	return $value;
-}
-
-function knbu_get_legends() {
-	global $knbu_kbsets;
-	
-	foreach($knbu_kbsets[knbu_get_kbset_for_post(get_the_ID())]->KnowledgeTypeSet->KnowledgeType as $type) {
-		$color = $type['Colour'];
-		echo '<li><span class="color" style="background-color: '.$color.'"></span>'.$type['Name'].'</li>';
-	}
-	echo '<li><span class="color" style="background-color: black"></span>Unspecified</li>';
-}
-
 $replies = get_comments(array(
 			'status' => 'approve',
 			'post_id' => get_the_ID()
@@ -27,9 +7,10 @@ $replies = get_comments(array(
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title><?php the_title(); ?> (Map) | <?php bloginfo('name'); ?></title>
-<link href='http://fonts.googleapis.com/css?family=Junge' rel='stylesheet' type='text/css'>
-<?php wp_head(); ?>
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+	<title><?php the_title(); ?> (Map) | <?php bloginfo('name'); ?></title>
+	<link href='http://fonts.googleapis.com/css?family=Junge' rel='stylesheet' type='text/css'>
+	<?php wp_head(); ?>
 </head>
 <body class="knbu-map-view <?php echo isset($_GET['map-frame']) ? 'knbu-map-frame' : 'knbu-map-full'; ?>">
 	<div id="map">
@@ -44,14 +25,20 @@ $replies = get_comments(array(
 			</ul>
 		</div>
 		<div id="navigation">
-			<div id="zoom"></div>
 			<div id="pan">
-				<div class="left"></div>
+				<img src="<?php echo plugins_url(); ?>/knowledge-building/images/navi-bg.png" id="navigation-background">
+				<img src="<?php echo plugins_url(); ?>/knowledge-building/images/arrow-left.png" class="arrow" id="arrow-left">
+				<img src="<?php echo plugins_url(); ?>/knowledge-building/images/arrow-up.png" class="arrow" id="arrow-up">
+				<img src="<?php echo plugins_url(); ?>/knowledge-building/images/arrow-right.png" class="arrow" id="arrow-right">
+				<img src="<?php echo plugins_url(); ?>/knowledge-building/images/arrow-down.png" class="arrow" id="arrow-down">
+				<img src="<?php echo plugins_url(); ?>/knowledge-building/images/center.png" class="arrow" id="arrow-center">
+				<!-- <div class="left"></div>
 				<div class="right"></div>
 				<div class="up"></div>
 				<div class="down"></div>
-				<div class="center"></div>
+				<div class="center"></div> -->
 			</div>
+			<div id="zoom"></div>
 		</div>
 		<div id="legend">
 			<ul>
@@ -81,24 +68,7 @@ $replies = get_comments(array(
 			<div style="clear:both"></div>
 		<a class="reply-toggle knbu-form-link" id="open-reply">Reply</a>
 		<div id="reply-wrapper">
-			<form>
-				<?php if(is_user_logged_in()) { ?>
-					<input type="hidden" value="1" id="current_user">
-					<?php } else { ?>
-					<p>Your info <br/>
-					<input type="hidden" value="0" id="current_user">
-					<input type="text" placeholder="Name" id="current_user_name"> 
-					<input type="text" placeholder="Email" id="current_user_email">
-					</p>
-				<?php } ?>
-				<input type="hidden" value="<?php echo admin_url('admin-ajax.php'); ?>" id="admin-ajax-url">
-				<input type="hidden" value="<?php echo get_the_ID(); ?>" id="post-id">
-				<input type="hidden" name="parent-comment" id="parent-comment-id">
-				<p>Comment <br><input type="text" id="comment-title" placeholder="Title"> <!-- Knowledge type --> <?php echo knbu_get_knowledge_type_select(); ?></p>
-				<p style="clear: both"><!--Reply<br>-->
-				<textarea style="width: 95%" rows="8" name="comment-content" placeholder="Reply"></textarea></p>
-				<p><input type="button" value="Send" id="submit-reply" ></p>
-			</form>
+			<?php knbu_comment_form_map(get_the_ID()); ?>
 		</div>
 		<div style="clear:both"></div>
 		</div>

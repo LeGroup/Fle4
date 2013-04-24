@@ -3,7 +3,7 @@
 Plugin Name: Knowledge Building
 Plugin URI: http://fle4.uiah.fi/kb-wp-plugin
 Description: Use post comment threads to facilitate meaningful knowledge building discussions. Comes with several knowledge type sets (eg. progressive inquiry, six hat thinking) that can be used to semantically tag comments, turning your Wordpress into a knowledge building environment. Especially useful in educational settings.
-Version: 0.6.6
+Version: 0.6.7
 Author: Tarmo Toikkanen, Antti Sandberg
 Author URI: http://tarmo.fi
 */
@@ -27,7 +27,7 @@ Author URI: http://tarmo.fi
 
 global $knbu_db_version;
 $knbu_db_version='0.12';
-$knbu_plugin_version = '0.6.6';
+$knbu_plugin_version = '0.6.7';
 
 add_action( 'admin_init', 'knbu_upgrade_hook' );
 
@@ -487,6 +487,65 @@ function knbu_comment_form($post_ID) {
 	</div>
 <?php
 }
+
+add_filter( 'comments_template', 'knbu_comment_template' );
+
+function knbu_comment_template( $comment_template ) {
+	//return __DIR__ . '/comments.php';
+}
+
+function knbu_comment_form_map($post_ID) {
+	?>
+	<div class="knbu-form">
+	<input type="hidden" value="<?php echo admin_url('admin-ajax.php'); ?>" id="admin-ajax-url">
+	<input type="hidden" value="<?php echo $post_ID; ?>" id="post-id">
+	<input type="hidden" name="parent-comment" id="parent-comment-id">
+	
+	<?php if(is_user_logged_in()) { ?>
+		<input type="hidden" value="1" id="current_user">
+		<?php } else { ?>
+		<input type="hidden" value="0" id="current_user">
+		<p><label for="author">Name <span class="required">*</span></label>
+			<input type="text" id="current_user_name" name="author">
+		</p>
+		<p><label for="author">Email <span class="required">*</span></label>
+			<input type="text" id="current_user_email" name="email">
+		</p>
+	<?php } ?>
+	<p><label for="title">Knowledge type <span class="required">*</span></label>
+		<?php echo knbu_get_knowledge_type_select(); ?>
+	</p>
+	<p><label for="comment">Comment <span class="required">*</span></label>
+		<textarea style="width: 95%" rows="8" name="comment"></textarea>
+	</p>
+	<p><label for="title">Main idea</label>
+		<input type="text" id="title" name="title">
+	</p>
+	<p><input type="submit" value="Send" id="submit-reply" ></p>
+	</div>
+	
+	<?php
+}
+	
+function knbu_get_knowledge_type_select() {
+	global $knbu_kbsets;
+	$value = '<select name="knbu_type">
+	<option disabled selected>Select knowledge type</option>';
+	foreach($knbu_kbsets[knbu_get_kbset_for_post(get_the_ID())]->KnowledgeTypeSet->KnowledgeType as $type)
+	$value .= '<option value="'.$type['ID'].'">'.$type['Name'].'</option>';
+	$value .= '</select>';
+	return $value;
+}
+
+function knbu_get_legends() {
+	global $knbu_kbsets;
+	
+	foreach($knbu_kbsets[knbu_get_kbset_for_post(get_the_ID())]->KnowledgeTypeSet->KnowledgeType as $type) {
+		$color = $type['Colour'];
+		echo '<li><span class="color" style="background-color: '.$color.'"></span>'.$type['Name'].'</li>';
+	}
+}
+
 
 add_action('init', 'knbu_init_mapview');
 

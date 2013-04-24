@@ -14,6 +14,7 @@
 	var Origin;
 	var KnBuLabels;
 	var AuthorLabels;
+	var nodeOpen = false;
 	
 	var RectSet, TextSet, PathSet;
 	
@@ -58,6 +59,15 @@
 		OriginalViewPort = { x: ViewPort.X, y: ViewPort.Y, width: ViewPort.width, height: ViewPort.height }
 		Origin = { X: Width/2, Y: Height/2 };
 		
+		$(window).resize(function() {
+			Width = $(window).width();
+			Height = $(window).height();
+			Canvas.setSize(Width, Height);
+			OriginalViewPort = { x: ViewPort.X, y: ViewPort.Y, width: ViewPort.width, height: ViewPort.height }
+			Origin = { X: Width/2, Y: Height/2 };
+			//ViewPort = Canvas.setViewBox(0, 0, Width, Height);
+		});
+		
 		for(var serverNode in NodesFromServer) 
 		{ Nodes[NodesFromServer[serverNode].id] = new Node(NodesFromServer[serverNode]); }
 		
@@ -86,7 +96,7 @@
 			if($(this).text() != 'Unspecified') {
 				var obj = Canvas.text(20, 20, $(this).text()).attr(attr);
 				
-				var v = Vector.Diag(500 + C.RadiusIncreaseByUser * $('#legend > ul > li').length, 360 * ($(this).index()/($('#legend > ul > li').length - 1)));
+				var v = Vector.Diag(500 + C.RadiusIncreaseByUser * $('#legend > ul > li').length, 360 * ($(this).index()/($('#legend > ul > li').length)));
 				v.Add(Origin);
 				obj.attr({ x: v.X, y: v.Y });
 				
@@ -101,7 +111,7 @@
 		
 		
 		$('body').
-		mouseup(function(){ draggingNode = false; }).
+		mouseup(function(){ /* draggingNode = false; */ }).
 		mouseleave(function() { releaseNode(); });
 		//Pan and Zoom mouse functionality
 		$('svg').
@@ -110,7 +120,7 @@
 				if(e.target.nodeName == 'svg') { 
 					mouseDown = true; 
 					mousePos = { x: e.pageX, y: e.pageY }; 
-					$('#message').hide(0);  
+					Node.Close();
 				}
 			}).
 			mouseup(function(e) { 
@@ -131,11 +141,13 @@
 				$('#zoom').slider('value', $('#zoom').slider('value') + delta * $('#zoom').slider('option', 'step')); 
 			});
 			
+		//Text selection
+		$("body").mouseup(messageSelection);
 		
 		/* Move connection lines before circles, so circles won't be under the lines. (Mouse events) */
 		$('#raven > svg > path').insertBefore('#raven > svg > rect:first');
 		
-		$('#close').click(function() { $('#message').hide(200); });
+		$('#close').click(function() { Node.Close(); });
 		
 		// Reply click events
 		$('#submit-reply').click(Reply);
@@ -204,14 +216,14 @@
 		Grouping = grouping;
 		
 		if(grouping == 'knowledgetypes') 
-			KnBuLabels.animate({ opacity: 1.0 }, 500, 'linear');
+			KnBuLabels.show().animate({ opacity: 1.0 }, 500, 'linear');
 		else
-			KnBuLabels.animate({ opacity: 0.0 }, 500, 'linear');
+			KnBuLabels.animate({ opacity: 0.0 }, 500, 'linear', function() { KnBuLabels.hide(); });
 			
 		if(grouping == 'users') 
 			AuthorLabels.show().animate({ opacity: 1.0 }, 500, 'linear');
 		else
-			AuthorLabels.animate({ opacity: 0.0 }, 500, 'linear');
+			AuthorLabels.animate({ opacity: 0.0 }, 500, 'linear', function() { AuthorLabels.hide(); });
 		
 		if(Grouping != 'discussion') 
 			FadeConnections(0);
@@ -226,6 +238,18 @@
 			if(!Nodes[node].SVG.Connections) continue;
 			for(var connection in Nodes[node].SVG.Connections) 
 			Nodes[node].SVG.Connections[connection].animate({ opacity: opacity }, 400);
+		}
+	}
+	
+	function messageSelection(e) {
+		if(window.getSelection()) {
+			var sel = window.getSelection();
+			if(sel.anchorNode && $(sel.anchorNode.parentElement).hasClass('message-content')) {
+				var string = sel.anchorNode.data.substring(sel.extentOffset, sel.baseOffset); 
+				if(string != '') {
+					//console.log(string);
+				}
+			}
 		}
 	}
 	
@@ -247,6 +271,7 @@
 		if(true || PanInterval)
 			clearInterval(PanInterval);
 	}
+	
 	
 	function ResetNodeUpdating() {
 		tries = 0;
@@ -330,7 +355,7 @@
 					if(jNode.Anchor) {
 						var v = AttractiveMovement(jNode.position, jNode.Anchor);
 						repulsive.Multiply(0.1);
-						v.Multiply(5);
+						v.Multiply(10);
 						attractive.Add(v);
 					} else {
 						for(var parent in jNode.Parents) {
@@ -349,7 +374,7 @@
 								var v = Vector.Diag(500 + C.RadiusIncreaseByUser * KnowledgeTypes.length, 360 * (t/(KnowledgeTypes.length)));
 								v.X -= KnowledgeTypes[t].width/2 - x;
 								var r = RepulsiveMovement(v, jNode.position);
-								r.Multiply(0.5);
+								r.Multiply(0.1);
 								repulsive.Add(r);
 							}
 							break;
@@ -431,7 +456,12 @@
 			v.Add(Vector.Diag(10, Math.random() * 360));
 			dist = v.LengthSquared();
 		}
-		v.Multiply(-C.Repulse / dist);
+		
+		var pulse = -C.Repulse;
+		if(Grouping == 'users' || Grouping == 'knowledgetypes')
+			pulse *= 0.3;
+		
+		v.Multiply(pulse / dist);
 		
 		return v;
 	}
@@ -513,6 +543,12 @@
 	
 		}
 		
+		this.ReleaseAnchor = function() {
+			releaseNode(node);	
+			ResetNodeUpdating();
+			
+		}
+		
 		this.InitSVG = function() { 
 		
 			node.SVG = Node.Add(
@@ -527,12 +563,16 @@
 				node.Date
 				); 
 				
+			if(node.Anchor) 
+				node.ShowPin();
+			else
+				node.HidePin();
+				
 			//node.SVG.Circle.ID = node.ID;
 			
 			/* Drag'n drop */
 			function move(dx, dy) { 
 				if(node.Static) return;
-				
 				draggingNode = true;
 				nodeDragged = node.ID;
 				node.ChangePosition({ x: node.originalpos.x + dx * scale - Origin.X, y: node.originalpos.y + dy * scale - Origin.Y }); 
@@ -541,6 +581,9 @@
 			
 			function stopdrag(e) { 
 				node.dragged = false;
+				if(!draggingNode) return;
+				
+				draggingNode = false;
 				
 				saveNodePosition(node, { X: node.SVG.Rect.attr('x') + node.SVG.Rect.attr('width')/2, Y: node.SVG.Rect.attr('y') + node.SVG.Rect.attr('height')/2 });
 				node.Positions.splice(0, node.Positions.length);
@@ -582,10 +625,17 @@
 			
 			/* Click events */
 			node.SVG.Set.click(function(e) {
+				if(e.target.nodeName == 'image') return;
+				if(draggingNode) return;
 				if(Vector.DistanceSquared(mouseDownStart.position, { X: mousePos.x, Y: mousePos.y }) > 10 * 10 ) 
 					return;
-				Node.Open(node);
+				if(!nodeOpen || SelectedNode != node)
+					Node.Open(node);
+				else
+					Node.Close();
 			});
+			
+			node.SVG.Pin.click(this.ReleaseAnchor);
 		}
 		
 		this.Move = function(acceleration, update) {
@@ -630,37 +680,53 @@
 		this.UpdatePosition = function() {
 			var realPos = new Vector(this.position.X + Origin.X, this.position.Y + Origin.Y);
 			
-			this.SVG.Rect.attr({ x: realPos.X - this.SVG.Text.data('width')/2 - 10, y: realPos.Y - this.SVG.Text.data('height')/2 - 10 });
+			this.SVG.Rect.attr({ x: realPos.X - this.SVG.Text.data('width')/2 - 15, y: realPos.Y - this.SVG.Text.data('height')/2 - 10 });
 			this.SVG.Text.attr({ x: realPos.X - this.SVG.Text.data('width')/2, y: realPos.Y });
+			this.SVG.Pin.attr({ x: realPos.X - this.SVG.Pin.getBBox().width/2, y: realPos.Y -  43});
 			
 			this.UpdateConnections();
+		}
+		
+		this.ShowPin = function() {
+			this.SVG.Pin.show();
+		}
+		
+		this.HidePin = function() {
+			this.SVG.Pin.hide();
 		}
 		
 		this.InitSVG();
 	}
 	
 	
-	function releaseNode() {
-		if(!draggingNode) return;
+	function releaseNode(node) {
+		if(!node) {
+			if(!draggingNode) return;
+			else node = Nodes[nodeDragged];
+		}
 		
-		Nodes[nodeDragged].SVG.Set.undrag();
-		Nodes[nodeDragged].initDrag();
-		Nodes[nodeDragged].Anchor = false;
+		node.SVG.Set.undrag();
+		node.initDrag();
+		node.Anchor = false;
+		//draggingNode = false;
+		node.dragged = false;
+		node.Positions.splice(0, node.Positions.length);
 		
-		draggingNode = false;
-		Nodes[nodeDragged].dragged = false;
-		Nodes[nodeDragged].Positions.splice(0, Nodes[nodeDragged].Positions.length);
+		saveNodePosition(node, false);
 		
-		saveNodePosition(Nodes[nodeDragged], false);
-		
-		nodeDragged = false;
+		node = false;
 	}
 	
 	Node.Open = function(node) {
 		//Shrink the old selected node to its normal size
 		//if(SelectedNode)
 		//SelectedNode.SVG.Circle.animate({ r: C.Radius }, 200);
+		node.SVG.Rect.attr({ "stroke": "#62abfd", "stroke-width": 3 });
 		
+		if(SelectedNode)	
+			SelectedNode.SVG.Rect.attr({ "stroke-width": 0 });
+			
+		nodeOpen = true;
 		
 		//Select the selected node
 		SelectedNode = node;
@@ -670,7 +736,7 @@
 		
 		//Set message data
 		var msg = $('#message');
-		msg.hide().find('.message-content').text(node.Content);
+		msg.hide().find('.message-content').html(node.Content);
 		msg.find('.message-type').html(node.TypeName);
 		msg.find('.message-avatar').attr({ src: node.Avatar });
 		msg.find('.message-username').text(node.Username);
@@ -708,6 +774,17 @@
 		msg.show(200);
 	}
 	
+	Node.Close = function(callback) {
+		
+	
+		nodeOpen = false;
+		$('#message').hide(0, function() {
+				if(callback)
+					callback();
+			});
+		
+	}
+	
 	Node.getDocumentPosition = function(node) {
 		return node.SVG.Set[0].node.getBoundingClientRect(); 
 	}
@@ -720,13 +797,14 @@
 			var arr = title.split(' ');
 			arr[Math.floor(arr.length/2)] += '\n';
 			title = arr.join(' ');
+			title = title.replace('\n ', '\n');
 		}
 		
-		ret.Text = Canvas.text(x, y - 7, '#'+id + ' - ' + title + '\n' + date + ' \nby ' + user);
+		ret.Text = Canvas.text(x, y - 7, '#'+id + ' ' + user + '\n' + date + ' \n' + title);
 		ret.Text.attr({ fill: '#000', 'text-anchor': 'start', 'font-size': '8px' });
 		var box = ret.Text.getBBox();
 		
-		var rect = Canvas.rect(x - box.width/2, y - box.height/2, box.width + 20, box.height + 20);
+		var rect = Canvas.rect(x - box.width/2, y - box.height/2, box.width + 30, box.height + 20);
 		rect.attr('fill', color);
 		rect.data('node-id', id);
 		ret.Rect = rect;
@@ -737,20 +815,14 @@
 		ret.Set = Canvas.set();
 		ret.Set.push(ret.Text);
 		ret.Set.push(ret.Rect);
+		var img = Canvas.image('wp-content/plugins/knowledge-building/images/pin.png', 100, 100, 17 * 0.7, 30 * 0.7);
+		img.data('not-open-node');
+		ret.Set.push(img);
+		ret.Pin = img;
 		
-		/*
-		var circle = Canvas.circle(x, y, Radius);
-		circle.attr('fill', 'rgba(240, 240, 240, 1)');
-		circle.attr('stroke', color);
-		circle.attr('stroke-width', C.Stroke);
-		circle.data('node-id', id); 
-		ret.Circle = circle;
-		*/
 		rect.insertBefore(ret.Text);
 		ret.Connections = [];
 		
-		//ret.Date = Canvas.text(x + C.Radius, y + 7, date + ' by ' + user);
-		//ret.Date.attr({ fill: 'rgba(255,255,255,0.7)', stroke: 'rgba(0, 0, 0, 0.2)', 'text-anchor': 'start', 'font-size': '10px' });
 		return ret;
 	}
 
@@ -822,9 +894,9 @@
 		$.post(url, { 
 			comment_post_ID: POST,
 			comment_knbu_type: $('select[name="knbu_type"]:first').val(),
-			comment_content: $('textarea[name="comment-content"]:first').val(),
+			comment_content: $('textarea[name="comment"]:first').val(),
 			comment_parent: $('#parent-comment-id').val(),
-			comment_title: $('#comment-title').val(),
+			comment_title: $('#title').val(),
 			comment_user: parseInt($('#current_user').val()),
 			comment_user_name: $('#current_user_name').val(),
 			comment_user_email: $('#current_user_email').val(),
@@ -859,7 +931,7 @@
 					AddNode(n);
 					
 					/* Reset reply form */
-					$('#message').hide(200, function() {
+					Node.Close(function() {
 						$('select[name="knbu_type"]:first option:first').attr('selected', true);
 						$('textarea[name="comment-content"]:first').val('');
 						ToggleReply();
@@ -886,27 +958,34 @@
 				max: 4,
 				min: 0.25,
 				step: 0.1,
-				value: 1
+				value: 0.7
 			});
 			
-		
+		Zoom(0.7);
 		PanInterval = setInterval(panClick, 30);
-		$('#pan .left').mousedown(function() { NavigationButtons.Left = true; });
-		$('#pan .right').mousedown(function() { NavigationButtons.Right = true; });
-		$('#pan .up').mousedown(function() { NavigationButtons.Up = true; });
-		$('#pan .down').mousedown(function() { NavigationButtons.Down = true; });
-		$('#pan .center').mousedown(ResetCanvasPosition);
+		$('#arrow-left').mousedown(function() { NavigationButtons.Left = true; });
+		$('#arrow-right').mousedown(function() { NavigationButtons.Right = true; });
+		$('#arrow-up').mousedown(function() { NavigationButtons.Up = true; });
+		$('#arrow-down').mousedown(function() { NavigationButtons.Down = true; });
+		$('#arrow-center').mousedown(ResetCanvasPosition);
 		$(window).mouseup(function() { NavigationButtons = {} }).mouseleave(function() { NavigationButtons = {} });
 	}
 	
 	function saveNodePosition(node, e) {
+		if(node.Static) return; 
+		
 		e.X -= Origin.X;
 		e.Y -= Origin.Y;
 		
-		if(e)
+		if(e) {
 			node.Anchor = new Vector(e.X, e.Y);
-		else 
+			node.ShowPin();
+		}
+		else {
 			node.Anchor = false;
+			node.HidePin();
+		}
+			
 		var url = $('#admin-ajax-url').val();
 		$.post(url, { 
 			id: node.ID,
