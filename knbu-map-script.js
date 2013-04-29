@@ -492,6 +492,7 @@
 		this.ID = args.id;
 		this.Date = args.date;
 		this.parent = parseInt(args.parent);
+		this.Index = args.index;
 		
 		if(args.anchor)
 			this.position = { X: args.anchor.X, Y: args.anchor.Y };
@@ -501,7 +502,12 @@
 			this.position = new Vector(Math.random() * 2 - 1, Math.random() * 2 - 1);
 			
 		this.Radius = C.Radius;
-		this.Color = args.color;
+		
+		if(args.color)
+			this.Color = args.color;
+		else
+			this.Color = '#fff';
+			
 		this.TypeName = args.typeName;
 		this.Content = args.content;
 		this.level = args.level;
@@ -560,7 +566,8 @@
 				node.ID, 
 				node.Title,
 				node.Username,
-				node.Date
+				node.Date,
+				node.Index
 				); 
 				
 			if(node.Anchor) 
@@ -680,9 +687,9 @@
 		this.UpdatePosition = function() {
 			var realPos = new Vector(this.position.X + Origin.X, this.position.Y + Origin.Y);
 			
-			this.SVG.Rect.attr({ x: realPos.X - this.SVG.Text.data('width')/2 - 15, y: realPos.Y - this.SVG.Text.data('height')/2 - 10 });
+			this.SVG.Rect.attr({ x: realPos.X - this.SVG.Text.data('width')/2 - 15, y: realPos.Y - this.SVG.Text.data('height')/2 - 10, "stroke-width": 0 });
 			this.SVG.Text.attr({ x: realPos.X - this.SVG.Text.data('width')/2, y: realPos.Y });
-			this.SVG.Pin.attr({ x: realPos.X - this.SVG.Pin.getBBox().width/2, y: realPos.Y -  43});
+			this.SVG.Pin.attr({ x: realPos.X - this.SVG.Pin.getBBox().width/2, y: realPos.Y - 50});
 			
 			this.UpdateConnections();
 		}
@@ -742,7 +749,7 @@
 		msg.find('.message-username').text(node.Username);
 		msg.find('.message-date').text(node.Date);
 		msg.find('.message-title').text(node.Title);
-		msg.find('#message-link').attr({ 'href': '#' + node.ID }).text('#'+node.ID);
+		msg.find('#message-link').attr({ 'href': '#' + node.Index }).text('#'+node.Index);
 		
 		//Get SVG element position relative to HTML document
 		var bounds = Node.getDocumentPosition(node);
@@ -789,7 +796,7 @@
 		return node.SVG.Set[0].node.getBoundingClientRect(); 
 	}
 	
-	Node.Add = function(x, y, Radius, parents, color, id, title, user, date) {
+	Node.Add = function(x, y, Radius, parents, color, id, title, user, date, index) {
 		var ret = {};
 		if(!color) { color = '#fff'; }
 		
@@ -800,7 +807,7 @@
 			title = title.replace('\n ', '\n');
 		}
 		
-		ret.Text = Canvas.text(x, y - 7, '#'+id + ' ' + user + '\n' + date + ' \n' + title);
+		ret.Text = Canvas.text(x + 3, y - 7, index + ' ' + user + '\n' + date + ' \n' + title);
 		ret.Text.attr({ fill: '#000', 'text-anchor': 'start', 'font-size': '8px' });
 		var box = ret.Text.getBBox();
 		
@@ -926,7 +933,8 @@
 						date: response.date,
 						color: response.color,
 						title: response.comment_title,
-						timestamp: response.timestamp
+						timestamp: response.timestamp,
+						index: response.index
 					});
 					AddNode(n);
 					
@@ -1025,8 +1033,11 @@
 	function OpenLinkedNode() {
 		var anchor = window.location.hash.replace('#', '');
 		
-		if(!isNaN(anchor) && anchor != "") {
-			Node.Open(Nodes[anchor]);
+		var id;
+		for(node in Nodes) { console.log(Nodes[node].Index); if(Nodes[node].Index == anchor) { id = node; break; } }
+
+		if(id && !isNaN(id) && id != "") {
+			Node.Open(Nodes[id]);
 		}
 	}
 	

@@ -3,7 +3,7 @@
 Plugin Name: Knowledge Building
 Plugin URI: http://fle4.uiah.fi/kb-wp-plugin
 Description: Use post comment threads to facilitate meaningful knowledge building discussions. Comes with several knowledge type sets (eg. progressive inquiry, six hat thinking) that can be used to semantically tag comments, turning your Wordpress into a knowledge building environment. Especially useful in educational settings.
-Version: 0.6.7
+Version: 0.6.8
 Author: Tarmo Toikkanen, Antti Sandberg
 Author URI: http://tarmo.fi
 */
@@ -27,7 +27,7 @@ Author URI: http://tarmo.fi
 
 global $knbu_db_version;
 $knbu_db_version='0.12';
-$knbu_plugin_version = '0.6.7';
+$knbu_plugin_version = '0.6.8';
 
 add_action( 'admin_init', 'knbu_upgrade_hook' );
 
@@ -491,7 +491,7 @@ function knbu_comment_form($post_ID) {
 add_filter( 'comments_template', 'knbu_comment_template' );
 
 function knbu_comment_template( $comment_template ) {
-	//return __DIR__ . '/comments.php';
+	return __DIR__ . '/comments.php';
 }
 
 function knbu_comment_form_map($post_ID) {

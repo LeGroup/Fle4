@@ -83,6 +83,7 @@ $replies = get_comments(array(
 function knbu_get_childs($id, $replies) {
 	global $knowledgeTypes, $knbu_kbsets, $post;
 	
+	$index = 1;
 	$nodes = array(
 				array(	
 					'id' => 0,
@@ -95,12 +96,13 @@ function knbu_get_childs($id, $replies) {
 					'timestamp' => strtotime( $post->post_date ),
 					'typeName' => 'Start',
 					'title' => $post->post_title,
-					'static' => true
+					'static' => true,
+					'index' => $index
 				)
 	);
 	
 	foreach($replies as $reply) {
-		
+		$index++;
 		$type = get_comment_meta($reply->comment_ID, 'kbtype', true);
 		$name = 'Unspecified';
 		$color = '#000';
@@ -132,7 +134,8 @@ function knbu_get_childs($id, $replies) {
 				'title' => $title,
 				'typeName' => $name,
 				'anchor' => $anchor,
-				'color' => $color
+				'color' => $color,
+				'index' => $index
 			);
 	}
 	echo '<script type="text/javascript">var NodesFromServer = '.json_encode($nodes).';</script>';
@@ -140,8 +143,8 @@ function knbu_get_childs($id, $replies) {
 
 
 function knbu_cmp($a, $b) {
-	if($a->comment_parent == $b->comment_parent) 
+	if(strtotime($a->comment_date) == strtotime($b->comment_date)) 
 		return 0;
-	return $a->comment_parent > $b->comment_parent ? 1 : -1;
+	return strtotime($a->comment_date) > strtotime($b->comment_date) ? 1 : -1;
 }
 ?>
