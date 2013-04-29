@@ -4,7 +4,7 @@ Donate link: http://fle4.uiah.fi/
 Tags: education, learning, knowledge building, progressive inquiry, comments, discussion, school
 Requires at least: 2.7
 Tested up to: 3.5.1
-Stable tag: 0.6.8
+Stable tag: 0.6.8.1
 
 Use comment threads to facilitate meaningful knowledge building discussions. Comes with several knowledge type sets (eg. progressive inquiry, six hat thinking) that can be used to semantically tag comments, turning your Wordpress into a knowledge building environment. Especially useful in educational settings.
 
@@ -24,7 +24,6 @@ This section describes how to install the plugin and get it working.
 
 1. Store the plugin into the `/wp-content/plugins/knowledge-building/` directory (basically just unzip the contents of the file into /wp-content/plugins).
 1. Activate the plugin through the 'Plugins' menu in Wordpress.
-1. Edit the 'Comments' template of your skin and change `wp_list_comments` to `knbu_list_comments`.
 1. Go to Settings, Knowledge Building and select which post Categories should have Knowledge Building enabled.
 
 Please note that since this plugin relies heavily on the commenting feature, not all themes will work nicely. Specifically, this plugin works best with themes that use the Wordpress built-in comment Walker. You can detect this by checking whether or not your comments.php template has a call to 'wp_list_comments' or not. If it does not, then it has its own custom way of showing comments, which this plugin cannot easily work with. You can either select another theme which uses Wordpress Walker, or just try and replace the code in comments.php that displays comments with a call to `knbu_list_comments();` and cross your fingers. :-)
