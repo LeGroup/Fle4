@@ -1,7 +1,8 @@
 <?php
 $replies = get_comments(array(
 			'status' => 'approve',
-			'post_id' => get_the_ID()
+			'post_id' => get_the_ID(),
+			'orderby' => 'date'
 			));
 ?>
 <!DOCTYPE html>
@@ -54,36 +55,20 @@ $replies = get_comments(array(
 		<?php } ?>
 	</div>
 	
-	<div id="message">
-		<div class="message-header">
-			<h4 class="message-type"></h4>
-			<img class="message-avatar">
-			<span class="message-username"></span>
-			<br />
-			<a id="message-link">#</a> <span class="message-title"></span>
-			<span class="message-date"></span>
-		</div>
-		<div class="message-content-wrapper">
-			<div class="message-content"></div>
-			<div style="clear:both"></div>
-		<a class="reply-toggle knbu-form-link" id="open-reply">Reply</a>
-		<div id="reply-wrapper">
-			<?php knbu_comment_form_map(get_the_ID()); ?>
-		</div>
-		<div style="clear:both"></div>
-		</div>
-	</div>
+	<div id="message"><?php knbu_comment(get_the_ID()); ?></div>
 		<?php
 			usort($replies, 'knbu_cmp');
-			knbu_get_childs(0, $replies);
+			knbu_get_childs(get_the_ID(), $replies);
 		?>
 	</body>
 </html>
 <?php
+
+
 function knbu_get_childs($id, $replies) {
 	global $knowledgeTypes, $knbu_kbsets, $post;
 	
-	$index = 1;
+	// The post itself will be the starting node
 	$nodes = array(
 				array(	
 					'id' => 0,
@@ -97,29 +82,56 @@ function knbu_get_childs($id, $replies) {
 					'typeName' => 'Start',
 					'title' => $post->post_title,
 					'static' => true,
-					'index' => $index
+					'index' => 1
 				)
 	);
 	
+	
+	$map_index = get_post_meta( $id, 'knbu_map_index', true);
+	
+	if(empty($map_index))
+		$map_index = 2;
+		
 	foreach($replies as $reply) {
-		$index++;
+		
+		// Get comment meta data
+		// Should be combined to one variable(?)
 		$type = get_comment_meta($reply->comment_ID, 'kbtype', true);
-		$name = 'Unspecified';
-		$color = '#000';
+		$title = get_comment_meta($reply->comment_ID, 'comment_title', true);
+		$node_index = get_comment_meta( $reply->comment_ID, 'knbu_map_comment_index' );
 		$anchor = json_decode(get_comment_meta($reply->comment_ID, 'node_position', true));
 		
+		// Default values
+		$name = 'Unspecified';
+		$color = '#000';
+		
+		// Get type name and color 
 		foreach($knbu_kbsets[knbu_get_kbset_for_post(get_the_ID())]->KnowledgeTypeSet->KnowledgeType as $t) {	
 			if($t['ID'] == $type) {
 				$name = (string)$t['Name']; 
 				$color = (string)$t['Colour'];
 			}
 		}
-		$title = get_comment_meta($reply->comment_ID, 'comment_title', true);
-		if(strlen($title) <= 0) {
+		
+		// If there's no title, get some text from content to be one
+		if(empty($title)) {
 			$words = explode(' ', $reply->comment_content);
 			$title = implode(' ', array_slice($words, 0, 3));
-			$title = substr($title, 0, 50);
+			$title = substr($title, 0, 70);
+			
+			// Remove these "special" characters from the end of string
+			if(in_array(substr($title, -1), array( ',', '.', ' ', '!', '?' )))
+				$title = substr($title, 0, -1);
+				
 			$title .= '...';
+		}
+		
+		// Check if there's no index set for the note
+		if(empty($node_index)) {
+			$node_index = $map_index;
+			$map_index++;
+			update_comment_meta( $reply->comment_ID, 'knbu_map_comment_index', $node_index );
+			update_post_meta( $id, 'knbu_map_index', $map_index);
 		}
 		
 		$nodes[] = array(
@@ -135,10 +147,11 @@ function knbu_get_childs($id, $replies) {
 				'typeName' => $name,
 				'anchor' => $anchor,
 				'color' => $color,
-				'index' => $index
-			);
+				'index' => $node_index
+		);
 	}
-	echo '<script type="text/javascript">var NodesFromServer = '.json_encode($nodes).';</script>';
+	
+	echo '<script type="text/javascript">var NodesFromServer = '.json_encode($nodes).'; var MapIndexFromServer = '.$map_index.';</script>';
 }
 
 

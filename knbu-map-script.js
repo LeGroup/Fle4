@@ -6,6 +6,7 @@
 	var Canvas, ViewPort;
 	/* Working values: Repulse 15000, Attract 0.001 */
 	var C = { Radius: 17, RectWidth: 90, RectHeight:45, Stroke: 8, Repulse: 15000 * 50, Attract: 0.001, Ignore_distance: 800, RadiusIncreaseByUser: 30 }
+	var NavigationButtons = { Left: false, Right: false, Up: false, Down: false };
 	var mouseDown = false;
 	var mousePos;
 	var Nodes = [];
@@ -15,6 +16,7 @@
 	var KnBuLabels;
 	var AuthorLabels;
 	var nodeOpen = false;
+	var SelectedNode;
 	
 	var RectSet, TextSet, PathSet;
 	
@@ -39,6 +41,8 @@
 	var totalStart = 0;
 	var FirstNodeTime, LastNodeTime;
 	var mouseDownStart = 0;
+	var scale = 1;
+	var PanInterval;
 
 	var POST;
 	
@@ -207,32 +211,6 @@
 		OpenLinkedNode();
 	}
 	
-	var NavigationButtons = { Left: false, Right: false, Up: false, Down: false };
-	var PanInterval;
-
-	function ChangeGrouping(grouping, element) {
-		$('#grouping > ul > li > a').css({ fontWeight: 'normal' });
-		$(element).css({ fontWeight: 'bolder' });
-		Grouping = grouping;
-		
-		if(grouping == 'knowledgetypes') 
-			KnBuLabels.show().animate({ opacity: 1.0 }, 500, 'linear');
-		else
-			KnBuLabels.animate({ opacity: 0.0 }, 500, 'linear', function() { KnBuLabels.hide(); });
-			
-		if(grouping == 'users') 
-			AuthorLabels.show().animate({ opacity: 1.0 }, 500, 'linear');
-		else
-			AuthorLabels.animate({ opacity: 0.0 }, 500, 'linear', function() { AuthorLabels.hide(); });
-		
-		if(Grouping != 'discussion') 
-			FadeConnections(0);
-		else 
-			FadeConnections(1);
-		
-		ResetNodeUpdating();
-	}
-	
 	function FadeConnections(opacity) {
 		for(var node in Nodes) {
 			if(!Nodes[node].SVG.Connections) continue;
@@ -253,26 +231,16 @@
 		}
 	}
 	
-	function panClick() {
-		var movement = new Vector(0, 0);
-		if(NavigationButtons.Left)
-			movement.Add(new Vector(20, 0));
-		if(NavigationButtons.Right)
-			movement.Add(new Vector(-20, 0));
-		if(NavigationButtons.Up)
-			movement.Add(new Vector(0, 20));
-		if(NavigationButtons.Down)
-			movement.Add(new Vector(0, -20));
-		
-		Pan(movement.X, movement.Y);
-	}
-
-	function panRelease() { 
-		if(true || PanInterval)
-			clearInterval(PanInterval);
-	}
-	
-	
+/* Node position Calculations  
+ * ResetNodeUpdating restarts update loop after it has finished calculations and closed. 
+ * CalculatePositions is the update loop for position calculations
+ * RepulsiveMovement calculates the repulsive force between two notes (or between node and a point)
+ * AttractiveMovement calculates the attractive force between child node and parent node (Or between node and a point)
+ * RepulsiveMovement and AttractiveMovement affects only one node. 
+ * ChangeGrouping is called when user clicks a link and changes the layout sorting/grouping method
+ * releaseNode releases a pinned node for dynamic positioning
+ * saveNodePosition pins node when they are dragged.
+ * */
 	function ResetNodeUpdating() {
 		tries = 0;
 		if(!calculating)
@@ -281,16 +249,6 @@
 			requestPositionsCalculating = true;
 	}
 
-	function AddNode(node) {
-		node.SetParents();
-		NodesWaiting.push(node);
-		tries = 0;
-		if(!calculating)
-			CalculatePositions();
-		else
-			requestPositionsCalculating = true;
-	}
-	
 	function CalculatePositions() {
 		
 		// Add nodes that are waiting to be added
@@ -482,7 +440,80 @@
 		v.Multiply(-dist * C.Attract);
 		return v;
 	}
-	var SelectedNode;
+	
+	function ChangeGrouping(grouping, element) {
+		$('#grouping > ul > li > a').css({ fontWeight: 'normal' });
+		$(element).css({ fontWeight: 'bolder' });
+		Grouping = grouping;
+		
+		if(grouping == 'knowledgetypes') 
+		KnBuLabels.show().animate({ opacity: 1.0 }, 500, 'linear');
+		else
+		KnBuLabels.animate({ opacity: 0.0 }, 500, 'linear', function() { KnBuLabels.hide(); });
+		
+		if(grouping == 'users') 
+		AuthorLabels.show().animate({ opacity: 1.0 }, 500, 'linear');
+		else
+		AuthorLabels.animate({ opacity: 0.0 }, 500, 'linear', function() { AuthorLabels.hide(); });
+		
+		if(Grouping != 'discussion') 
+		FadeConnections(0);
+		else 
+		FadeConnections(1);
+		
+		ResetNodeUpdating();
+	}
+	
+	function releaseNode(node) {
+		if(!node) {
+			if(!draggingNode) return;
+			else node = Nodes[nodeDragged];
+		}
+		
+		node.SVG.Set.undrag();
+		node.initDrag();
+		node.Anchor = false;
+		//draggingNode = false;
+		node.dragged = false;
+		node.Positions.splice(0, node.Positions.length);
+		
+		saveNodePosition(node, false);
+		
+		node = false;
+	}
+	
+	function saveNodePosition(node, e) {
+		if(node.Static) return; 
+		
+		e.X -= Origin.X;
+		e.Y -= Origin.Y;
+		
+		if(e) {
+			node.Anchor = new Vector(e.X, e.Y);
+			node.ShowPin();
+		}
+		else {
+			node.Anchor = false;
+			node.HidePin();
+		}
+		
+		var url = $('#admin-ajax-url').val();
+		$.post(url, { 
+			id: node.ID,
+			node_position: JSON.stringify(e),
+			action: 'knbu_save_node_position'
+			}, function(response) {
+			
+		});
+	}
+	
+	/* Node functionality 
+	 * AddNode adds a new node to the Nodes array. 
+	 * Node.Open opens a message box displaying content of the node
+	 * Node.Close closes the message box
+	 * Node.getDocumentPosition gets node's SVG element's position in the document (not in the SVG map).
+	 * Node.Add adds SVG elements of a new node to the map. Isn't and shouldn't be actually used anywhere else than in the constructor of Node element.
+	 * */
 	function Node(args) {
 		if(!args.typeName)
 			args.typeName = 'Unspecified';
@@ -705,23 +736,14 @@
 		this.InitSVG();
 	}
 	
-	
-	function releaseNode(node) {
-		if(!node) {
-			if(!draggingNode) return;
-			else node = Nodes[nodeDragged];
-		}
-		
-		node.SVG.Set.undrag();
-		node.initDrag();
-		node.Anchor = false;
-		//draggingNode = false;
-		node.dragged = false;
-		node.Positions.splice(0, node.Positions.length);
-		
-		saveNodePosition(node, false);
-		
-		node = false;
+	function AddNode(node) {
+		node.SetParents();
+		NodesWaiting.push(node);
+		tries = 0;
+		if(!calculating)
+		CalculatePositions();
+		else
+		requestPositionsCalculating = true;
 	}
 	
 	Node.Open = function(node) {
@@ -730,8 +752,11 @@
 		//SelectedNode.SVG.Circle.animate({ r: C.Radius }, 200);
 		node.SVG.Rect.attr({ "stroke": "#62abfd", "stroke-width": 3 });
 		
-		if(SelectedNode)	
+		if(SelectedNode) {	
+			if(SelectedNode.ID != node.ID)
+			{ ResetReplyForm(); }	
 			SelectedNode.SVG.Rect.attr({ "stroke-width": 0 });
+		}
 			
 		nodeOpen = true;
 		
@@ -749,7 +774,7 @@
 		msg.find('.message-username').text(node.Username);
 		msg.find('.message-date').text(node.Date);
 		msg.find('.message-title').text(node.Title);
-		msg.find('#message-link').attr({ 'href': '#' + node.Index }).text('#'+node.Index);
+		msg.find('.message-link').attr({ 'href': '#' + node.Index }).text('#'+node.Index);
 		
 		//Get SVG element position relative to HTML document
 		var bounds = Node.getDocumentPosition(node);
@@ -832,15 +857,59 @@
 		
 		return ret;
 	}
-
 	
-
+	
+	/* Map navigation functionality 
+	 * InitNavigation initializes the navigation tools of the map.
+	 * Pan moves the map when user drags it.
+	 * panClick gets user input and provides it to Pan function
+	 * ResetCanvasPosition moves the viewport of the map to the center of the map.
+	 * MoveCanvas handles momentum of panning
+	 * Zoom handles map zooming.
+	 * */
+	function InitNavigation() {
+		$('#zoom').slider({
+			orientation: 'vertical',
+			change: function(e, ui) { Zoom(ui.value); },
+			slide: function(e, ui) {
+				Zoom(ui.value);
+			},
+			max: 4,
+			min: 0.25,
+			step: 0.1,
+			value: 0.7
+		});
+		
+		Zoom(0.7);
+		PanInterval = setInterval(panClick, 30);
+		$('#arrow-left').mousedown(function() { NavigationButtons.Left = true; });
+		$('#arrow-right').mousedown(function() { NavigationButtons.Right = true; });
+		$('#arrow-up').mousedown(function() { NavigationButtons.Up = true; });
+		$('#arrow-down').mousedown(function() { NavigationButtons.Down = true; });
+		$('#arrow-center').mousedown(ResetCanvasPosition);
+		$(window).mouseup(function() { NavigationButtons = {} }).mouseleave(function() { NavigationButtons = {} });
+	}
+	
 	function Pan(x, y) {
 		ViewPort.X -= x * scale;
 		ViewPort.Y -= y * scale;
 		Canvas.setViewBox(ViewPort.X, ViewPort.Y, ViewPort.width, ViewPort.height);
 	}
-
+	
+	function panClick() {
+		var movement = new Vector(0, 0);
+		if(NavigationButtons.Left)
+		movement.Add(new Vector(20, 0));
+		if(NavigationButtons.Right)
+		movement.Add(new Vector(-20, 0));
+		if(NavigationButtons.Up)
+		movement.Add(new Vector(0, 20));
+		if(NavigationButtons.Down)
+		movement.Add(new Vector(0, -20));
+		
+		Pan(movement.X, movement.Y);
+	}
+	
 	function ResetCanvasPosition() {
 		var x = -(OriginalViewPort.width * scale - OriginalViewPort.width) / 2;
 		var y = -(OriginalViewPort.height * scale - OriginalViewPort.height) / 2;
@@ -868,7 +937,6 @@
 			setTimeout(MoveCanvas, 16);
 	}
 
-	var scale = 1;
 	function Zoom(z) {
 		scale = z;
 		
@@ -889,8 +957,11 @@
 		
 	}
 
-	function ToggleReply() { $('#reply-wrapper').toggle(200); }
-
+/* Reply functionality 
+ * Reply handles comment replying in KNBU posts.
+ * ToggleReply and CloseReply toggle/close the message box
+ * ResetReplyForm empties fields in reply form.
+ * */
 	function Reply() {
 		if(submitted)
 			return;
@@ -917,6 +988,12 @@
 				if(response.Success) {
 					/* Add new node */
 					/* At this point the comment has been saved to the server */
+					
+					if(!response.index) {
+						response.index = 1;
+						for(var n in Nodes) { if(response.index < Nodes[n].Index + 1) { response.index = Nodes[n].Index + 1; } }
+					}
+					
 					var n = new Node({
 						id: response.id, 
 						position: new Vector(
@@ -940,8 +1017,7 @@
 					
 					/* Reset reply form */
 					Node.Close(function() {
-						$('select[name="knbu_type"]:first option:first').attr('selected', true);
-						$('textarea[name="comment-content"]:first').val('');
+						ResetReplyForm();
 						ToggleReply();
 						submitted = false;
 					});
@@ -956,52 +1032,31 @@
 		});
 	}
 
-	function InitNavigation() {
-		$('#zoom').slider({
-				orientation: 'vertical',
-				change: function(e, ui) { Zoom(ui.value); },
-				slide: function(e, ui) {
-					Zoom(ui.value);
-				},
-				max: 4,
-				min: 0.25,
-				step: 0.1,
-				value: 0.7
-			});
-			
-		Zoom(0.7);
-		PanInterval = setInterval(panClick, 30);
-		$('#arrow-left').mousedown(function() { NavigationButtons.Left = true; });
-		$('#arrow-right').mousedown(function() { NavigationButtons.Right = true; });
-		$('#arrow-up').mousedown(function() { NavigationButtons.Up = true; });
-		$('#arrow-down').mousedown(function() { NavigationButtons.Down = true; });
-		$('#arrow-center').mousedown(ResetCanvasPosition);
-		$(window).mouseup(function() { NavigationButtons = {} }).mouseleave(function() { NavigationButtons = {} });
+	function ToggleReply() { $('#reply-wrapper').toggle(200); }
+	function CloseReply() { $('#reply-wrapper').hide(0); }
+	
+	function ResetReplyForm() {
+		// Reset all fields expect knbu dropdown list
+		$('#message textarea, #message input[type="text"]').val('');
+		
+		// Reset knbu list
+		$('select[name="knbu_type"]:first option:first').attr('selected', true);
+		
+		$('.knbu-checklist').text('');
+		
+		// Close reply form
+		CloseReply();
 	}
 	
-	function saveNodePosition(node, e) {
-		if(node.Static) return; 
+	function OpenLinkedNode() {
+		var anchor = window.location.hash.replace('#', '');
 		
-		e.X -= Origin.X;
-		e.Y -= Origin.Y;
-		
-		if(e) {
-			node.Anchor = new Vector(e.X, e.Y);
-			node.ShowPin();
+		var id;
+		for(node in Nodes) { if(Nodes[node].Index == anchor) { id = node; break; } }
+
+		if(id && !isNaN(id) && id != "") {
+			Node.Open(Nodes[id]);
 		}
-		else {
-			node.Anchor = false;
-			node.HidePin();
-		}
-			
-		var url = $('#admin-ajax-url').val();
-		$.post(url, { 
-			id: node.ID,
-			node_position: JSON.stringify(e),
-			action: 'knbu_save_node_position'
-			}, function(response) {
-				
-			});
 	}
 	
 	function Vector(x, y) {
@@ -1028,17 +1083,6 @@
 			return Math.pow(v2.X - v1.X, 2) + Math.pow(v2.Y - v1.Y, 2);
 		}
 		Vector.Distance = function(v1, v2) { return Math.pow(Vector.DistanceSquared(v1, v2), 1/2); }
-	}
-	
-	function OpenLinkedNode() {
-		var anchor = window.location.hash.replace('#', '');
-		
-		var id;
-		for(node in Nodes) { console.log(Nodes[node].Index); if(Nodes[node].Index == anchor) { id = node; break; } }
-
-		if(id && !isNaN(id) && id != "") {
-			Node.Open(Nodes[id]);
-		}
 	}
 	
 	/* Initialize module when document is ready */
