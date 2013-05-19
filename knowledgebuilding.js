@@ -105,7 +105,6 @@
 				coms.sort(function(a,b) {
 					var ca = $(a).find(".kbtype-label span").html();
 					var cb = $(b).find(".kbtype-label span").html();
-					console.log(ca + ', ' + cb);
 					return (ca < cb) ? -sort_order: (ca > cb) ? sort_order : 0;
 				});
 				break;

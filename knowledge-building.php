@@ -518,6 +518,11 @@ function knbu_comment_form($post_ID) {
 }
 	
 function knbu_comment_template( $comment_template ) {
+	global $post;
+	$knbu = knbu_get_kbset_for_post($post->post_ID);
+	if(!$knbu)
+		return $comment_template;
+		
 	return __DIR__ . '/comments.php';
 }
 
@@ -748,6 +753,7 @@ function knbu_comment($id, $args = false) {
 			'content' => ''
 			);
 	}
+	
 	?>
 	<div class="message-header">
 		<h4 class="message-type"><?php echo $args['type']; ?></h4>
@@ -765,7 +771,7 @@ function knbu_comment($id, $args = false) {
 			<?php knbu_comment_form_map($id); ?>
 		</div>
 		<div style="clear:both"></div>
-	</divspan<?php 
+	</div><?php 
 }
 	
 ?>

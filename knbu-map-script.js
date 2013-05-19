@@ -44,6 +44,7 @@
 	var scale = 1;
 	var PanInterval;
 
+	var Loop;
 	var POST;
 	
 	
@@ -285,10 +286,8 @@
 			repulsive.X = 0; repulsive.Y = 0;
 			attractive.X = 0; attractive.Y = 0;
 		
-		
 			for(var i in Nodes) {
 				var iNode = Nodes[i];
-				
 				
 				//Obviously we don't have to calculate forces "between" the same node.
 				if(i == j) continue;
@@ -305,7 +304,7 @@
 				//Repulsive force
 				repulsive.Add(RepulsiveMovement(iNode.position, jNode.position));
 			}
-				
+			
 			switch(Grouping) {
 				case 'discussion': 
 					// Node's parent pulls the node
@@ -394,10 +393,11 @@
 		
 		tries++;
 		if((moved && tries < 1000) || requestPositionsCalculating)
-			setTimeout(CalculatePositions, 10);
+			//setTimeout(CalculatePositions, 10);
+			Loop = window.requestAnimationFrame(CalculatePositions);
 		else {
 			calculating = false;
-				
+			window.cancelAnimationFrame(Loop);	
 			//$('#fps').text(Date.now() - totalStart);
 		}
 	}
@@ -847,7 +847,7 @@
 		ret.Set = Canvas.set();
 		ret.Set.push(ret.Text);
 		ret.Set.push(ret.Rect);
-		var img = Canvas.image('wp-content/plugins/knowledge-building/images/pin.png', 100, 100, 17 * 0.7, 30 * 0.7);
+		var img = Canvas.image(plugin_url + '/images/pin.png', 100, 100, 17 * 0.7, 30 * 0.7);
 		img.data('not-open-node');
 		ret.Set.push(img);
 		ret.Pin = img;
@@ -877,10 +877,10 @@
 			max: 4,
 			min: 0.25,
 			step: 0.1,
-			value: 0.7
+			value: 3
 		});
 		
-		Zoom(0.7);
+		Zoom(3);
 		PanInterval = setInterval(panClick, 30);
 		$('#arrow-left').mousedown(function() { NavigationButtons.Left = true; });
 		$('#arrow-right').mousedown(function() { NavigationButtons.Right = true; });
@@ -938,7 +938,8 @@
 	}
 
 	function Zoom(z) {
-		scale = z;
+		
+		scale = $('#zoom').slider('option', 'max') - z;
 		
 		if(scale < 0.25) {
 			scale = 0.25;
@@ -1087,5 +1088,23 @@
 	
 	/* Initialize module when document is ready */
 	$(function() { Init(); });
+	
+	if ( !window.requestAnimationFrame ) {
+		
+		window.requestAnimationFrame = ( function() {
+			
+			return window.webkitRequestAnimationFrame ||
+			window.mozRequestAnimationFrame ||
+			window.oRequestAnimationFrame ||
+			window.msRequestAnimationFrame ||
+			function( /* function FrameRequestCallback */ callback, /* DOMElement Element */ element ) {
+				
+				window.setTimeout( callback, 1000 / 60 );
+				
+			};
+			
+		} )();
+		
+	}
 	
 }(jQuery));

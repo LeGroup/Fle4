@@ -151,7 +151,7 @@ function knbu_get_childs($id, $replies) {
 		);
 	}
 	
-	echo '<script type="text/javascript">var NodesFromServer = '.json_encode($nodes).'; var MapIndexFromServer = '.$map_index.';</script>';
+	echo '<script type="text/javascript">var NodesFromServer = '.json_encode($nodes).'; var MapIndexFromServer = '.$map_index.'; var plugin_url = "'.plugins_url('knowledge-building').'";</script>';
 }
 
 
