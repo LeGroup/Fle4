@@ -8,7 +8,7 @@ $replies = get_comments(array(
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
 	<title><?php the_title(); ?> (Map) | <?php bloginfo('name'); ?></title>
 	<link href='http://fonts.googleapis.com/css?family=Junge' rel='stylesheet' type='text/css'>
 	<?php wp_head(); ?>
@@ -26,20 +26,23 @@ $replies = get_comments(array(
 			</ul>
 		</div>
 		<div id="navigation">
-			<div id="pan">
-				<img src="<?php echo plugins_url(); ?>/knowledge-building/images/navi-bg.png" id="navigation-background">
-				<img src="<?php echo plugins_url(); ?>/knowledge-building/images/arrow-left.png" class="arrow" id="arrow-left">
-				<img src="<?php echo plugins_url(); ?>/knowledge-building/images/arrow-up.png" class="arrow" id="arrow-up">
-				<img src="<?php echo plugins_url(); ?>/knowledge-building/images/arrow-right.png" class="arrow" id="arrow-right">
-				<img src="<?php echo plugins_url(); ?>/knowledge-building/images/arrow-down.png" class="arrow" id="arrow-down">
-				<img src="<?php echo plugins_url(); ?>/knowledge-building/images/center.png" class="arrow" id="arrow-center">
-				<!-- <div class="left"></div>
-				<div class="right"></div>
-				<div class="up"></div>
-				<div class="down"></div>
-				<div class="center"></div> -->
+			<img src="<?php echo plugins_url('knowledge-building'); ?>/images/toggle-hide.png" width="15" height="15" id="navi-toggle-button">
+			<div id="navi-toggle-container">
+				<div id="pan">
+					<img src="<?php echo plugins_url(); ?>/knowledge-building/images/navi-bg.png" id="navigation-background">
+					<img src="<?php echo plugins_url(); ?>/knowledge-building/images/arrow-left.png" class="arrow" id="arrow-left">
+					<img src="<?php echo plugins_url(); ?>/knowledge-building/images/arrow-up.png" class="arrow" id="arrow-up">
+					<img src="<?php echo plugins_url(); ?>/knowledge-building/images/arrow-right.png" class="arrow" id="arrow-right">
+					<img src="<?php echo plugins_url(); ?>/knowledge-building/images/arrow-down.png" class="arrow" id="arrow-down">
+					<img src="<?php echo plugins_url(); ?>/knowledge-building/images/center.png" class="arrow" id="arrow-center">
+					<!-- <div class="left"></div>
+					<div class="right"></div>
+					<div class="up"></div>
+					<div class="down"></div>
+					<div class="center"></div> -->
+				</div>
+				+<div id="zoom"></div>-
 			</div>
-			<div id="zoom"></div>
 		</div>
 		<div id="legend">
 			<ul>
@@ -103,7 +106,7 @@ function knbu_get_childs($id, $replies) {
 		
 		// Default values
 		$name = 'Unspecified';
-		$color = '#000';
+		$color = '#fff';
 		
 		// Get type name and color 
 		foreach($knbu_kbsets[knbu_get_kbset_for_post(get_the_ID())]->KnowledgeTypeSet->KnowledgeType as $t) {	
@@ -114,17 +117,8 @@ function knbu_get_childs($id, $replies) {
 		}
 		
 		// If there's no title, get some text from content to be one
-		if(empty($title)) {
-			$words = explode(' ', $reply->comment_content);
-			$title = implode(' ', array_slice($words, 0, 3));
-			$title = substr($title, 0, 70);
-			
-			// Remove these "special" characters from the end of string
-			if(in_array(substr($title, -1), array( ',', '.', ' ', '!', '?' )))
-				$title = substr($title, 0, -1);
-				
-			$title .= '...';
-		}
+		$title = knbu_generate_title($title, $reply->comment_content);
+		
 		
 		// Check if there's no index set for the note
 		if(empty($node_index)) {
@@ -133,6 +127,8 @@ function knbu_get_childs($id, $replies) {
 			update_comment_meta( $reply->comment_ID, 'knbu_map_comment_index', $node_index );
 			update_post_meta( $id, 'knbu_map_index', $map_index);
 		}
+		
+		$reply->user_email = isset($reply->user_email) ? $reply->user_email : '';
 		
 		$nodes[] = array(
 				'id' => $reply->comment_ID,

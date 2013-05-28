@@ -17,6 +17,7 @@
 	var AuthorLabels;
 	var nodeOpen = false;
 	var SelectedNode;
+	var Timeline, TimelineEnd;
 	
 	var RectSet, TextSet, PathSet;
 	
@@ -25,13 +26,13 @@
 	var NodesPerUser = [];
 	var Users = [];
 	
-	// 'discussion', 'users', 'knowledgetypes'
+	// 'discussion', 'users', 'knowledgetypes', 'time
 	var Grouping = 'discussion';
 	
 	var panMovement = new Vector(0, 0);
 	var requestPositionsCalculating = false;
 	var calculating = false;
-	var Widht, Height;
+	var Width, Height;
 	var OriginalViewPort = { width: 0, height: 0 }
 	var AnimateNodeMovement = false;
 	var submitted = false;
@@ -114,6 +115,14 @@
 			}
 		});
 		
+		Timeline = Canvas.rect(Width/2, Height/2, 200, 3);
+		TimelineEnd = Canvas.rect(0,Height/2 - 10,3,20);
+		Timeline.attr({ 'fill': 'rgba(255,255,255,0.5)', 'stroke-width': 0 });
+		TimelineEnd.attr({ 'fill': 'rgba(255,255,255,0.5)', 'stroke-width': 0 });
+		Timeline.insertBefore(Nodes[0].SVG.Rect);
+		Timeline.hide();
+		TimelineEnd.hide();
+		
 		
 		$('body').
 		mouseup(function(){ /* draggingNode = false; */ }).
@@ -147,7 +156,8 @@
 			});
 			
 		//Text selection
-		$("body").mouseup(messageSelection);
+		//Unused
+		//$("body").mouseup(messageSelection);
 		
 		/* Move connection lines before circles, so circles won't be under the lines. (Mouse events) */
 		$('#raven > svg > path').insertBefore('#raven > svg > rect:first');
@@ -241,7 +251,7 @@
  * ChangeGrouping is called when user clicks a link and changes the layout sorting/grouping method
  * releaseNode releases a pinned node for dynamic positioning
  * saveNodePosition pins node when they are dragged.
- * */
+ */
 	function ResetNodeUpdating() {
 		tries = 0;
 		if(!calculating)
@@ -272,8 +282,12 @@
 		var nodePos = [];
 		for(var n in Nodes) { nodePos[n] = Nodes[n].position; }
 		
-		var timespan = LastNodeTime - FirstNodeTime;
-		var timebar = timespan/60/60 * 5;
+		if(Grouping == 'time') {
+			var timespan = LastNodeTime - FirstNodeTime;
+			var timebar = timespan/60/60 * 5;
+			Timeline.attr({ 'width': timebar });
+			TimelineEnd.attr( { 'x': Width/2 + timebar });
+		}
 		
 		for(var j in Nodes) {
 			var jNode = Nodes[j];
@@ -374,10 +388,14 @@
 			var v = Vector.Add(attractive, repulsive);
 			var len = v.LengthSquared();
 			// Limit the maximum movement (otherwise causes bugs)
-			if(len > 150 * 150) 
-				v.Clamp(150);
+			var clampValue = 150;
 			
-			if(len > 0.3) { //If movement is small enough, no need to calculate forces again
+			if(Grouping == 'time')
+				clampValue = 800;
+			if(len > clampValue * clampValue) 
+				v.Clamp(clampValue);
+			
+			if(len > 4) { //If movement is small enough, no need to calculate forces again
 				moved = true;
 				
 				// Apply movement
@@ -447,20 +465,33 @@
 		Grouping = grouping;
 		
 		if(grouping == 'knowledgetypes') 
-		KnBuLabels.show().animate({ opacity: 1.0 }, 500, 'linear');
+			KnBuLabels.show().animate({ opacity: 1.0 }, 500, 'linear');
 		else
-		KnBuLabels.animate({ opacity: 0.0 }, 500, 'linear', function() { KnBuLabels.hide(); });
+			KnBuLabels.animate({ opacity: 0.0 }, 500, 'linear', function() { KnBuLabels.hide(); });
 		
-		if(grouping == 'users') 
-		AuthorLabels.show().animate({ opacity: 1.0 }, 500, 'linear');
+		if(grouping == 'users')
+			AuthorLabels.show().animate({ opacity: 1.0 }, 500, 'linear');
 		else
-		AuthorLabels.animate({ opacity: 0.0 }, 500, 'linear', function() { AuthorLabels.hide(); });
+			AuthorLabels.animate({ opacity: 0.0 }, 500, 'linear', function() { AuthorLabels.hide(); });
 		
 		if(Grouping != 'discussion') 
-		FadeConnections(0);
+			FadeConnections(0);
 		else 
-		FadeConnections(1);
+			FadeConnections(1);
+			
+		if(Grouping == 'time') {
+			Timeline.show();
+			TimelineEnd.show();
+		}
+		else {
+			Timeline.hide();
+			TimelineEnd.hide();
+		}
 		
+		if(Grouping == 'knowledgetypes' || Grouping == 'users') {
+			ResetCanvasPosition();
+		}
+			
 		ResetNodeUpdating();
 	}
 	
@@ -740,10 +771,14 @@
 		node.SetParents();
 		NodesWaiting.push(node);
 		tries = 0;
+		
+		if(node.Timestamp > LastNodeTime)
+			LastNodeTime = node.Timestamp;
+		
 		if(!calculating)
-		CalculatePositions();
+			CalculatePositions();
 		else
-		requestPositionsCalculating = true;
+			requestPositionsCalculating = true;
 	}
 	
 	Node.Open = function(node) {
@@ -807,14 +842,11 @@
 	}
 	
 	Node.Close = function(callback) {
-		
-	
 		nodeOpen = false;
 		$('#message').hide(0, function() {
 				if(callback)
 					callback();
 			});
-		
 	}
 	
 	Node.getDocumentPosition = function(node) {
@@ -870,9 +902,9 @@
 	function InitNavigation() {
 		$('#zoom').slider({
 			orientation: 'vertical',
-			change: function(e, ui) { Zoom(ui.value); },
+			change: function(e, ui) { SliderZoom(ui.value); },
 			slide: function(e, ui) {
-				Zoom(ui.value);
+				SliderZoom(ui.value);
 			},
 			max: 4,
 			min: 0.25,
@@ -880,7 +912,17 @@
 			value: 3
 		});
 		
-		Zoom(3);
+		$('#navi-toggle-button').click(function() {
+			$('#navi-toggle-container, #legend, #grouping').toggle(200);
+			
+			if($(this).attr('src').indexOf('toggle.png') > 0) 
+				$(this).attr('src', $(this).attr('src').replace('toggle.png', 'toggle-hide.png'));
+			else
+				$(this).attr('src', $(this).attr('src').replace('toggle-hide.png', 'toggle.png'));
+			
+		});
+		
+		SliderZoom(3);
 		PanInterval = setInterval(panClick, 30);
 		$('#arrow-left').mousedown(function() { NavigationButtons.Left = true; });
 		$('#arrow-right').mousedown(function() { NavigationButtons.Right = true; });
@@ -911,12 +953,16 @@
 	}
 	
 	function ResetCanvasPosition() {
-		var x = -(OriginalViewPort.width * scale - OriginalViewPort.width) / 2;
-		var y = -(OriginalViewPort.height * scale - OriginalViewPort.height) / 2;
+		FitInWindow();
+		
 		
 		function anim() {
+			
+			var x = -(OriginalViewPort.width * scale - OriginalViewPort.width) / 2;
+			var y = -(OriginalViewPort.height * scale - OriginalViewPort.height) / 2;
 			ViewPort.X = ViewPort.X - (ViewPort.X - x) * 0.5;
 			ViewPort.Y = ViewPort.Y - (ViewPort.Y - y) * 0.5;
+			
 			Canvas.setViewBox(ViewPort.X, ViewPort.Y, ViewPort.width, ViewPort.height);
 			
 			if(Math.abs(ViewPort.X - x) < 10) {
@@ -926,7 +972,7 @@
 			else
 				setTimeout(anim, 16);
 		}
-		setTimeout(anim, 16);
+		anim();
 	}
 
 	function MoveCanvas() {
@@ -936,10 +982,14 @@
 		if(panMovement.LengthSquared() > 10 && !mouseDown)
 			setTimeout(MoveCanvas, 16);
 	}
+	
+	function SliderZoom(z) {
+		Zoom($('#zoom').slider('option', 'max') - z);
+	}
 
 	function Zoom(z) {
 		
-		scale = $('#zoom').slider('option', 'max') - z;
+		scale = z;
 		
 		if(scale < 0.25) {
 			scale = 0.25;
@@ -956,6 +1006,83 @@
 		
 		Canvas.setViewBox(ViewPort.X, ViewPort.Y, ViewPort.width, ViewPort.height);
 		
+	}
+	
+	function FitInWindow() {
+		switch(Grouping) {
+			case 'users': FitInWindow_UserView(); break;
+			case 'knowledgetypes': FitInWindow_KnowledgeTypeView(); break;
+			default: FitInWindow_DiscussionView(); break;
+		}
+	}
+	
+	function FitInWindow_DiscussionView() {
+		
+		var bounds = { left: 0, top: 0, right: 0, bottom: 0 };
+		for(var n in Nodes) {
+			var box = Nodes[n].SVG.Rect.getBBox();
+			if( !bounds.left || (bounds.left && bounds.left > box.x) ) 
+				bounds.left = box.x;
+			if( !bounds.right || (bounds.right && bounds.right < box.x2) ) 
+				bounds.right = box.x2;
+			if( !bounds.top || (bounds.top && bounds.top > box.y) ) 
+				bounds.top = box.y;
+			if( !bounds.bottom || (bounds.bottom && bounds.bottom < box.y2) ) 
+				bounds.bottom = box.y2;
+		}
+		
+		var scaleWidth;
+		if(Math.abs(Width/2 - bounds.left) > Math.abs(Width/2 - bounds.right))
+			scaleWidth = Math.abs(Width/2 - bounds.left) * 2;
+		else
+			scaleWidth = Math.abs(Width/2 - bounds.right) * 2;
+			
+		var scaleHeight;
+		if(Math.abs(Height/2 - bounds.top) > Math.abs(Height/2 - bounds.bottom))
+			scaleHeight = Math.abs(Height/2 - bounds.top) * 2;
+		else
+			scaleHeight = Math.abs(Height/2 - bounds.bottom) * 2;
+		
+		var newScale = (scaleWidth/Width > scaleHeight/Height) ? scaleWidth/Width : scaleHeight/Height;
+		
+		newScale *= 1.1;
+		ZoomToValue($('#zoom').slider('option', 'max') - newScale);
+	}
+	
+	function FitInWindow_KnowledgeTypeView() {
+		var va = Height < Width ? Height : Width;
+		
+		var zoomValue = 2 * (500 + C.RadiusIncreaseByUser * $('#legend > ul > li').length)/va;
+		zoomValue *= 1.2;
+		ZoomToValue($('#zoom').slider('option', 'max') - zoomValue);
+	}
+	
+	function FitInWindow_UserView() {
+		var va = Height < Width ? Height : Width;
+		
+		var zoomValue = 2 * (500 + C.RadiusIncreaseByUser * Users.length)/va;
+		zoomValue *= 1.2;
+		ZoomToValue($('#zoom').slider('option', 'max') - zoomValue);
+	}
+	
+	function FitInWindow_TimeView() {
+		FitInWindow_DiscussionView();
+	}
+	
+	function ZoomToValue(val) {
+		
+		function _fit() {
+			var value = $('#zoom').slider('option', 'value');
+			$('#zoom').slider('option', 'value', val + (value - val) * 0.5);
+			
+			if(Math.abs(value - val) < 0.1)	
+				$('#zoom').slider('option', 'value', val);
+			else
+				setTimeout(_fit, 1);
+			
+		}
+		
+		_fit();
 	}
 
 /* Reply functionality 

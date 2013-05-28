@@ -9,6 +9,35 @@
 		/* Check whether KB is enabled; if not, do nothing */
 		$('#knbu-type-selector').change(function (e) { GetKnbuInfo(e); });
 		
+		if(!$('body').hasClass('knbu-map-full')) {
+			$('#submit-reply.knbu-submit').click(function(e) {
+				
+				var form = $(this).closest('form');
+				var ok = true;
+				var error = '';
+				
+				if(!form.find('#knbu-type-selector').first().val() || form.find('#knbu-type-selector').first().val() == form.find('#knbu-type-selector').find('option').first().val()) {
+					ok = false;
+					error += 'Knowledge type field is required!\n';
+				}
+				
+				if(form.find('textarea[name="comment"]').first().val().length == 0) {
+					ok = false;
+					error += 'Comment field is required!\n';
+				}
+				
+				if(form.find('#title').hasClass('required-field') && form.find('#title').val().length == 0) {
+					ok = false;
+					error += 'Main idea field is required!\n';
+				}
+				
+				if(!ok) {
+					e.preventDefault();
+					alert(error);
+				}
+			});
+		}
+		
 		function GetKnbuInfo(e) {
 			
 			var url = $('#admin-ajax-url').val();

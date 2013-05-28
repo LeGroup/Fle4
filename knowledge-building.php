@@ -1,14 +1,14 @@
-﻿<?php
+<?php
 /*
 Plugin Name: Knowledge Building
 Plugin URI: http://fle4.uiah.fi/kb-wp-plugin
 Description: Use post comment threads to facilitate meaningful knowledge building discussions. Comes with several knowledge type sets (eg. progressive inquiry, six hat thinking) that can be used to semantically tag comments, turning your Wordpress into a knowledge building environment. Especially useful in educational settings.
-Version: 0.6.10
+Version: 0.6.11
 Author: Tarmo Toikkanen, Antti Sandberg
 Author URI: http://tarmo.fi
 */
 
-/*  Copyright 2009-2011  Tarmo Toikkanen  (email : tarmo@iki.fi)
+/*  Copyright 2009-2013  Tarmo Toikkanen  (email : tarmo@iki.fi), Antti Sandberg (email : antti.sandberg@gmail.com)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ Author URI: http://tarmo.fi
 
 global $knbu_db_version;
 $knbu_db_version='0.12';
-$knbu_plugin_version = '0.6.10';
+$knbu_plugin_version = '0.6.11';
 
 add_action('init', 'knbu_init_mapview');
 add_action('wp_enqueue_scripts', 'knbu_enqueue_scripts');
@@ -76,7 +76,7 @@ $knbu_kbsets = wp_cache_get('knbu_kbsets');
 if ( $knbu_kbsets == false ) {
 	$knbu_kbsets = array();
 # Read available KBset xml files into memory
-	$kbset_dir = WP_PLUGIN_DIR.DIRECTORY_SEPARATOR."knowledge-building".DIRECTORY_SEPARATOR."kbsets";
+	$kbset_dir = __DIR__.DIRECTORY_SEPARATOR.'kbsets';
 	$d = dir($kbset_dir);
 	while ( false != ($entry = $d->read()) ) {
 		if ( ereg('\.xml$',strtolower($entry)) ) {
@@ -109,7 +109,7 @@ function knbu_install() {
  * Register option page for this plugin.
  */
 function knbu_plugin_menu() {
-	add_options_page('Knowledge Building Plugin Options', 'Knowledge Building', 8, __FILE__, 'knbu_plugin_options');
+	add_options_page('Knowledge Building Plugin Options', 'Knowledge Building', 'administrator', __FILE__, 'knbu_plugin_options');
 	// Temporarily added installation hook here, since register_activation_hook doesn't work properly
 	knbu_install();
 }
@@ -124,7 +124,7 @@ function knbu_plugin_options() {
 	$hidden = 'knbu_form_posted';
 
 # Update options if form is submitted
-	if ( $_POST[$hidden] == 'Y' ) {
+	if ( isset($_POST[$hidden]) && $_POST[$hidden] == 'Y' ) {
 		$sels = array();
 		foreach ( $knbu_kbsets as $file => $xml ) {
 			$fname = explode('.',$file);
@@ -135,44 +135,51 @@ function knbu_plugin_options() {
 			}
 		}
 		update_option('knbu_categories',$sels);
+		update_option('knbu_main_title_required', $_POST['main-title-field'] == 'required');
 	}
 	$sels = get_option('knbu_categories'); ?>
 		<div class="wrap">
 			<form method="post" action="<?php echo $_SERVER['REQUEST_URI']; ?>">
 			<input type="hidden" name="<?php echo $hidden; ?>" value="Y"/>
-			<table class="form-table">
-			<tr valign="top">
-			<th scope="row">Select Knowledgetype Sets to use with each Category</th>
-			<td>
-			<table>
-			<tr>
-			<th></th>
-			<?php foreach ( get_categories(array('hide_empty' => 0)) as $name => $cat ) { ?>
-				<th><?php echo $cat->name; ?></th>
-			<?php } ?>
-			</tr>
-			<tr>
-				<th>None</th>
+			<h2>Select Knowledgetype Sets to use with each Category</h2>
+			<p>
+				<table style="width: 100%; cell-spacing: 10px; padding-left: 40px;">
+				<tr valign="top">
+				<td></td>
 				<?php foreach ( get_categories(array('hide_empty' => 0)) as $name => $cat ) { ?>
-					<td><input type="radio" name="<?php echo 'cat_' . $cat->cat_ID;?>" value="" <?php if (!$sels[$cat->cat_ID]) echo 'checked="checked"'; ?>/></td>
-				<?php } ?>
-			</tr>
-			<?php foreach ( $knbu_kbsets as $file => $xml ) {
-				$fname = explode('.',$file);
-				$fname = $fname[0];
-				?>
-			 	<tr>
-				<th><?php echo $xml->KnowledgeTypeSet['Name']; ?>
-				</th>
-				<?php foreach ( get_categories(array('hide_empty' => 0)) as $name => $cat ) { ?>
-					<td><input type="radio" name="<?php echo 'cat_' . $cat->cat_ID; ?>" value="<?php echo $fname; ?>" <?php if ($sels[$cat->cat_ID]==$fname) echo 'checked="checked"'; ?>/></td>
+					<th style="text-align:center;font-weight: bold;"><?php echo $cat->name; ?></th>
 				<?php } ?>
 				</tr>
-			<?php } ?>
-			</table>
-			</td>
-			</tr>
-			</table>
+				<tr>
+					<th style="text-align: left">None</th>
+					<?php foreach ( get_categories(array('hide_empty' => 0)) as $name => $cat ) { ?>
+						<td style="text-align:center;padding:10px 0;"><input type="radio" name="<?php echo 'cat_' . $cat->cat_ID;?>" value="" <?php if (!isset($sels[$cat->cat_ID]) || !$sels[$cat->cat_ID]) { echo 'checked="checked"'; } ?>/></td>
+					<?php } ?>
+				</tr>
+				<?php foreach ( $knbu_kbsets as $file => $xml ) {
+					$fname = explode('.',$file);
+					$fname = $fname[0];
+					?>
+					<tr style="padding: 10px 0">
+					<th style="padding: 10px 0;text-align: left"><?php echo $xml->KnowledgeTypeSet['Name']; ?>
+					</th>
+					<?php foreach ( get_categories(array('hide_empty' => 0)) as $name => $cat ) { ?>
+						<td style="text-align:center"><input type="radio" name="<?php echo 'cat_' . $cat->cat_ID; ?>" value="<?php echo $fname; ?>" <?php if (isset($sels[$cat->cat_ID]) && $sels[$cat->cat_ID] == $fname) { echo 'checked="checked"'; } ?>/></td>
+					<?php } ?>
+					</tr>
+				<?php } ?>
+				</table>
+			</p>
+			<h2>Other</h2>
+			<p>
+				<table style="min-width: 50%; margin-left: 40px;">
+					<tr>
+						<th style="text-align: left;">Main idea field is </th>
+						<td><input type="radio" name="main-title-field" value="required" <?php if(get_option('knbu_main_title_required')) { echo 'checked'; } ?>> Required</td>
+						<td><input type="radio" name="main-title-field" value="optional" <?php if(!get_option('knbu_main_title_required')) { echo 'checked'; } ?>> Optional</td>
+					</tr>
+				</table>
+			</p>
 			<p class="submit">
 			<input type="submit" class="button-primary" value="<?php _e('Save Changes'); ?>" />
 			</p>
@@ -294,24 +301,24 @@ function knbu_list_comments($args = array(), $comments = null) {
 		return;
 	}
 	
-?>
-<input type="hidden" id="knbu-exists">
-<div id="comment_sorter">
-	
-Show notes
-<ul>
-<li>as map</li>
-<li>as thread</li>
-<li>by knowledge type</li>
-<li>by person</li>
-<li>by date</li>
-</ul>
-</div>
-<div id="map-frame">
-	<iframe src="<?php echo add_query_arg( array( 'map-view' => '1', 'map-frame' => '1' ) ); ?>" style="width: 100%; height: 720px;"></iframe>
+	?>
+	<input type="hidden" id="knbu-exists">
+	<div id="comment_sorter">
+		
+	Show notes
+	<ul>
+	<li>as map</li>
+	<li>as thread</li>
+	<li>by knowledge type</li>
+	<li>by person</li>
+	<li>by date</li>
+	</ul>
 	</div>
-<div id="comment-frame" class="commentlist" style="display: none">
-<?php
+	<div id="map-frame">
+		<iframe src="<?php echo add_query_arg( array( 'map-view' => '1', 'map-frame' => '1' ) ); ?>" style="width: 100%; height: 720px;"></iframe>
+		</div>
+	<div id="comment-frame" class="commentlist" style="display: none">
+	<?php
 
 	$kbtype = knbu_get_kbset_for_post();
 	if ( !$kbtype ) {
@@ -398,7 +405,7 @@ class Walker_KB extends Walker_Comment {
 }
 	
 	
-/**
+/*
  * Add custom stylesheets to style queue.
  *
  * Hooked to wp_print_styles action.
@@ -409,15 +416,15 @@ function knbu_custom_stylesheet() {
 	if ( file_exists($myStyleFile) ) {
 		wp_enqueue_style( 'myStyleSheets', $myStyleUrl);
 	}
-	wp_enqueue_style('jquery-simpledialog', WP_PLUGIN_URL . '/knowledge-building/jquery.simpledialog/simpledialog.css');
+	//wp_enqueue_style('jquery-simpledialog', WP_PLUGIN_URL . '/knowledge-building/jquery.simpledialog/simpledialog.css');
 }
 /**
  * Add custom javascript files when needed.
  * Hooked to wp_print_scripts action. Only adds scripts when displaying comments.
  */
 function knbu_script_load() {
-	if ( comments_open() && ( is_single() || is_page() ) ) {
-		wp_enqueue_script('jquery-simpledialog', WP_PLUGIN_URL . '/knowledge-building/jquery.simpledialog/simpledialog.js', array('jquery'));
+	if ( ( is_single() || is_page() ) && comments_open() ) {
+		//wp_enqueue_script('jquery-simpledialog', WP_PLUGIN_URL . '/knowledge-building/jquery.simpledialog/simpledialog.js', array('jquery'));
 		wp_enqueue_script('knbu', WP_PLUGIN_URL . '/knowledge-building/knowledgebuilding.js', array('jquery','jquery-color') );
 	}
 }
@@ -557,10 +564,10 @@ function knbu_comment_form_map($post_ID) {
 	<p><label for="comment">Comment <span class="required">*</span></label>
 		<textarea style="width: 95%" rows="8" name="comment"></textarea>
 	</p>
-	<p><label for="title">Main idea</label>
-		<input type="text" id="title" name="title">
+	<p><label for="title">Main idea <?php if(get_option('knbu_main_title_required')) { echo '<span class="required">*</span>'; } ?></label>
+		<input type="text" id="title" name="title" <?php if(get_option('knbu_main_title_required')) { echo 'class="required-field"'; } ?>>
 	</p>
-	<p><input type="submit" value="Post Comment" id="submit-reply" name="submit"></p>
+	<p><input type="submit" value="Post Comment" id="submit-reply" class="knbu-submit" name="submit"></p>
 	</div>
 	
 	<?php
@@ -613,8 +620,8 @@ function knbu_new_reply_ajax() {
 		die();
 	}
 	
-	if(empty($_POST['comment_title'])) {
-		$var->Message = 'Comment title field cannot be empty'; 
+	if(get_option('knbu_main_title_required') && empty($_POST['comment_title'])) {
+		$var->Message = 'Main idea field cannot be empty'; 
 		echo json_encode($var);
 		die();
 	}
@@ -674,7 +681,7 @@ function knbu_new_reply_ajax() {
 	$data['comment_author'] = $var->username;
 	$id = wp_insert_comment($data);
 	$var->content = $_POST['comment_content'];
-	$var->comment_title = $_POST['comment_title'];
+	$var->comment_title = knbu_generate_title($_POST['comment_title'], $var->content);
 	
 	if($id) {
 		$var->Success = true;
@@ -773,5 +780,20 @@ function knbu_comment($id, $args = false) {
 		<div style="clear:both"></div>
 	</div><?php 
 }
+
+function knbu_generate_title($title, $message) {
+	if(!empty($title)) return $title;
 	
+	$words = explode(' ', $message);
+	$title = implode(' ', array_slice($words, 0, 3));
+	$title = substr($title, 0, 70);
+	
+	// Remove these "special" characters from the end of string
+	if(in_array(substr($title, -1), array( ',', '.', ' ', '!', '?' )))
+	$title = substr($title, 0, -1);
+	
+	$title .= '...';
+	
+	return $title;
+}
 ?>

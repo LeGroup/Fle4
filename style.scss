@@ -89,6 +89,12 @@ div.kbtype-label {
 	background-image: url(images/grid.png); 
 	font-family: 'Junge'; 
 
+	#navi-toggle-button {
+		cursor: pointer;
+		opacity: 0.7;
+		&:hover, &:active { opacity: 1.0; }
+	}
+	
 	#full-screen {
 		position: absolute;
 		bottom: 3px;
@@ -283,7 +289,13 @@ div.kbtype-label {
 		display: block; 
 		width: 100%;
 	}
-
+	
+	#navi-toggle-container {
+		text-align: center;
+		font-weight: bolder;
+		color: #fff;
+	}
+	
 	#navigation { 
 		position: absolute; 
 		top: 10px; 
@@ -303,7 +315,6 @@ div.kbtype-label {
 			margin: auto;
 			position: relative;
 			width: 10px;
-			margin-top: 20px;
 			padding: 10px 0;
 			
 			.ui-slider-handle {
