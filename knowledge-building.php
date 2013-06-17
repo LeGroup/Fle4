@@ -3,7 +3,7 @@
 Plugin Name: Knowledge Building
 Plugin URI: http://fle4.uiah.fi/kb-wp-plugin
 Description: Use post comment threads to facilitate meaningful knowledge building discussions. Comes with several knowledge type sets (eg. progressive inquiry, six hat thinking) that can be used to semantically tag comments, turning your Wordpress into a knowledge building environment. Especially useful in educational settings.
-Version: 0.6.11
+Version: 0.6.12
 Author: Tarmo Toikkanen, Antti Sandberg
 Author URI: http://tarmo.fi
 */
@@ -27,7 +27,7 @@ Author URI: http://tarmo.fi
 
 global $knbu_db_version;
 $knbu_db_version='0.12';
-$knbu_plugin_version = '0.6.11';
+$knbu_plugin_version = '0.6.12';
 
 add_action('init', 'knbu_init_mapview');
 add_action('wp_enqueue_scripts', 'knbu_enqueue_scripts');
@@ -48,8 +48,8 @@ add_action('wp_ajax_knbu_provide_knbu_info', 'knbu_provide_knbu_info');
 add_action('wp_ajax_nopriv_knbu_provide_knbu_info', 'knbu_provide_knbu_info');
 
 add_filter( 'comments_template', 'knbu_comment_template' );
-add_filter('template_include', 'knbu_map_view_template');
-add_filter('comment_save_pre', 'knbu_store_comment');
+add_filter( 'template_include', 'knbu_map_view_template' );
+add_filter( 'comment_save_pre', 'knbu_store_comment' );
 
 register_activation_hook(__FILE__,'knbu_install');
 
@@ -116,7 +116,6 @@ function knbu_plugin_menu() {
 
 /**
  * Define option page for this plugin.
- *
  * This option page is used to map KB typesets to post categories.
  */
 function knbu_plugin_options() {
@@ -225,6 +224,7 @@ function knbu_get_kbset_for_post($id = false) {
  * @param  object  $comment  The comment whose KB type is needed
  * @return array             The KB type for the comment
  */
+
 function knbu_get_ktype_for_comment($comment) {
 	global $knbu_kbsets,$post;
 	$kbset = knbu_get_kbset_for_post();
@@ -234,7 +234,6 @@ function knbu_get_ktype_for_comment($comment) {
 	}
 	return false;
 }
-
 
 /**
  * Store comment's KB set information.
@@ -315,20 +314,21 @@ function knbu_list_comments($args = array(), $comments = null) {
 	</ul>
 	</div>
 	<div id="map-frame">
-		<iframe src="<?php echo add_query_arg( array( 'map-view' => '1', 'map-frame' => '1' ) ); ?>" style="width: 100%; height: 720px;"></iframe>
+		<img src="<?php echo plugins_url(); ?>/knowledge-building/images/map-view-banner.png">
+		<!-- <iframe src="<?php echo add_query_arg( array( 'map-view' => '1', 'map-frame' => '1' ) ); ?>" style="width: 100%; height: 720px;"></iframe>-->
 		</div>
 	<div id="comment-frame" class="commentlist" style="display: none">
-	<?php
+		<?php
 
-	$kbtype = knbu_get_kbset_for_post();
-	if ( !$kbtype ) {
-		wp_list_comments();
-	} else {
-		$comments = knbu_fetch_ktypes($wp_query->comments,$wp_query->post->ID);
-		wp_list_comments(array('walker'=>new Walker_KB),$comments);
-	}
-	
-	?>
+		$kbtype = knbu_get_kbset_for_post();
+		if ( !$kbtype ) {
+			wp_list_comments();
+		} else {
+			$comments = knbu_fetch_ktypes($wp_query->comments,$wp_query->post->ID);
+			wp_list_comments(array('walker'=>new Walker_KB),$comments);
+		}
+		
+		?>
 	</div>
 	<?php
 }
@@ -614,41 +614,25 @@ function knbu_new_reply_ajax() {
 	$time = current_time('mysql');
 	$var = new StdClass();
 	
-	if(empty($_POST['comment_content'])) {
-		$var->Message = 'Content field cannot be empty'; 
-		echo json_encode($var);
-		die();
+	function validate($condition, $messageIfFail) {
+		if($condition) {
+			$var = new StdClass();
+			$var->Message = $messageIfFail; 
+			echo json_encode($var);
+			die();
+		}
 	}
 	
-	if(get_option('knbu_main_title_required') && empty($_POST['comment_title'])) {
-		$var->Message = 'Main idea field cannot be empty'; 
-		echo json_encode($var);
-		die();
-	}
-	if(empty($_POST['comment_knbu_type']) || $_POST['comment_knbu_type'] == 'Select type') {
-		$var->Message = 'Please select Knowledge type.'; 
-		echo json_encode($var);
-		die();
-	}
-	if(!is_numeric($_POST['comment_post_ID'])) {
-		$var->Message = 'There was an error.'; 
-		echo json_encode($var);
-		die();
-	}
+	validate(empty($_POST['comment_content']), 'Content field cannot be empty');
+	validate(get_option('knbu_main_title_required') && empty($_POST['comment_title']), 'Main idea field cannot be empty');
+	validate(empty($_POST['comment_knbu_type']) || $_POST['comment_knbu_type'] == 'Select type', 'Please select Knowledge type.');
+	validate(!is_numeric($_POST['comment_post_ID']), 'There was an error.');
 	
 	if(!$_POST['comment_user']) {
-		if(strlen($_POST['comment_user_email']) == 0) {
-			$var->Message = 'User email field cannot be empty'; 
-			echo json_encode($var);
-			die();
-		}
-		
-		if(strlen($_POST['comment_user_name']) == 0) {
-			$var->Message = 'User name field cannot be empty'; 
-			echo json_encode($var);
-			die();
-		}
+		validate(strlen($_POST['comment_user_email']) == 0, 'User email field cannot be empty');
+		validate(strlen($_POST['comment_user_name']) == 0, 'User name field cannot be empty');
 	}
+	
 	$data = array(
 		'comment_post_ID' => $_POST['comment_post_ID'],
 		'comment_content' => $_POST['comment_content'],
@@ -673,9 +657,8 @@ function knbu_new_reply_ajax() {
 	
 	// Get map index
 	// Basically just the node number
-	$map_index = get_post_meta( $data['comment_post_ID'], 'knbu_map_index', true);
-	$var->index = $map_index;
-	update_post_meta( $data['comment_post_ID'], 'knbu_map_index', $map_index + 1 );
+	$var->index = get_post_meta( $data['comment_post_ID'], 'knbu_map_index', true);
+	update_post_meta( $data['comment_post_ID'], 'knbu_map_index', $var->index + 1 );
 	
 	
 	$data['comment_author'] = $var->username;

@@ -123,10 +123,10 @@
 		Timeline.hide();
 		TimelineEnd.hide();
 		
-		
 		$('body').
 		mouseup(function(){ /* draggingNode = false; */ }).
 		mouseleave(function() { releaseNode(); });
+		
 		//Pan and Zoom mouse functionality
 		$('svg').
 			mousedown(function(e) { 
@@ -208,10 +208,9 @@
 		AuthorLabels.attr({ opacity: 0 });
 		
 		// Set grouping controls
-		$('#grouping-discussion').click(function() { ChangeGrouping('discussion', this); });
-		$('#grouping-byauthors').click(function() { ChangeGrouping('users', this); });
-		$('#grouping-byknowledgetypes').click(function() { ChangeGrouping('knowledgetypes', this); });
-		$('#grouping-time').click(function() { ChangeGrouping('time', this); });
+		$('#grouping-select').change(function(e) {
+			ChangeGrouping($(this).val());
+		});
 		
 		$('#raven > svg > path').insertBefore('#raven > svg > rect:first');
 		
@@ -388,10 +387,9 @@
 			var v = Vector.Add(attractive, repulsive);
 			var len = v.LengthSquared();
 			// Limit the maximum movement (otherwise causes bugs)
-			var clampValue = 150;
 			
-			if(Grouping == 'time')
-				clampValue = 800;
+			
+			var clampValue = 800;
 			if(len > clampValue * clampValue) 
 				v.Clamp(clampValue);
 			
@@ -425,12 +423,15 @@
 		var dist = Vector.DistanceSquared(node1Pos, node2Pos);
 		if(dist > C.Ignore_distance * C.Ignore_distance) return new Vector(0, 0);
 		
+		dist = Math.max(dist, 100);
+		
+		
 		var v = Vector.Subtract(node1Pos, node2Pos);
 		v.Normalize();
 		
 		if(v.LengthSquared() == 0) {
 			v.Add(Vector.Diag(10, Math.random() * 360));
-			dist = v.LengthSquared();
+			dist = 100;
 		}
 		
 		var pulse = -C.Repulse;
@@ -459,9 +460,9 @@
 		return v;
 	}
 	
-	function ChangeGrouping(grouping, element) {
+	function ChangeGrouping(grouping) {
 		$('#grouping > ul > li > a').css({ fontWeight: 'normal' });
-		$(element).css({ fontWeight: 'bolder' });
+		
 		Grouping = grouping;
 		
 		if(grouping == 'knowledgetypes') 
@@ -835,7 +836,7 @@
 		
 		msg.css({ top: top, left: left });
 		
-		msg.css({ backgroundColor: node.Color });
+		msg.find('.knbu-comment').css({ backgroundColor: node.Color });
 		
 		
 		msg.show(200);
@@ -1160,8 +1161,15 @@
 		});
 	}
 
-	function ToggleReply() { $('#reply-wrapper').toggle(200); }
-	function CloseReply() { $('#reply-wrapper').hide(0); }
+	
+	function ToggleReply() { $('#reply-wrapper').toggle(200); 
+		if($('#open-reply').text() == 'Reply') 
+		{ $('#open-reply').text('Close'); } 
+		else 
+		{ $('#open-reply').text('Reply'); } 
+	}
+	
+	function CloseReply() { $('#reply-wrapper').hide(0); $('#open-reply').text('Reply'); }
 	
 	function ResetReplyForm() {
 		// Reset all fields expect knbu dropdown list

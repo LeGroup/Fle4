@@ -2,13 +2,17 @@
 
 (function($) {
 	
+	/* Add tiny expansion to the jQuery to add content match selector */
+	$.expr[':'].contentIs = function(el, idx, meta) { return $(el).text() === meta[3]; };
+	
 	var cur_sort = "";
 	var sort_order = -1;
+	var threadTitles = {};
 
 	$(function() {
 		/* Check whether KB is enabled; if not, do nothing */
 		$('#knbu-type-selector').change(function (e) { GetKnbuInfo(e); });
-		
+	
 		if(!$('body').hasClass('knbu-map-full')) {
 			$('#submit-reply.knbu-submit').click(function(e) {
 				
@@ -65,87 +69,206 @@
 		
 		if ($("#knbu-exists").length == 0) { return; }
 		
-		
-		
-		
 		$('.comment-reply-link').click(function(e) {
 			e.preventDefault();
-			var comment_body = $(this).closest('.comment-body');
-			comment_body.attr('id').replace('div-comment-', '');
+			var comment_body = $(this).closest('.comment');
 			
-			$('#comment_parent').val(comment_body.attr('id').replace('div-comment-', ''));
-			$('#respond').hide().insertAfter(comment_body).show(200);
+			if(comment_body.find('#respond').length > 0) 
+				comment_body.find('#respond').toggle(200);
+			else {
+			
+				$('#comment_parent').val(comment_body.data('id'));
+				$('#respond').hide().insertAfter(this).show(200);
+			}
+			
+			if($(this).text() == 'Reply') {
+				$('.comment-reply-link').text('Reply');
+				$(this).text('Close');
+			}
+			else
+				$(this).text('Reply');
 		});
 
 
-		 $("#comment_sorter li").click(function(e) {
-			//e.preventDefault();
+		$("#comment_sorter li").click(function(e) {
+			e.preventDefault();
 			var $target = $(e.target);
 			var $list = $(".commentlist");
-			var $coms = $list.find("li.comment");
+			var $coms = $list.find(".comment");
 			var coms = $coms.get();
-
-			if($target.html() != 'as thread') {
-			   $('.commentlist').removeClass('thread-sorted');
+			var type = $target.data('type');
+			if(type != 'as thread') {
+			   $list.removeClass('thread-sorted');
 			}
 			
-			if ( cur_sort == $target.html() ) 
+			if ( cur_sort == type ) 
 				sort_order = sort_order * -1; 
 			else 
 				sort_order = 1;
+				
+				if(sort_order > 0) {
+					$('.sort-up').css({ opacity: 0.2 }); 
+					$('.sort-down').css({ opacity: 0.8 }); 
+				}
+				else {
+					$('.sort-up').css({ opacity: 0.8 }); 
+					$('.sort-down').css({ opacity: 0.2 }); 
+				}
 			
-		   if($target.html() != 'as map') {
+			$('.thread-title').hide();
+			
+		   if(type != 'on-a-map') {
 			   $('#map-frame').hide();
 			   $('#comment-frame').show();
 		   }
-			switch($target.html()) {
-				case 'as map':
+			switch(type) {
+				case 'on-a-map':
 				$('#map-frame').show();
 				$('#comment-frame').hide();
 				break;
 				
-				case 'as thread':
-				if(!$('.commentlist').hasClass('thread-sorted'))
-					$('.commentlist').addClass('thread-sorted');
+				case 'as-thread':
+				if(!$list.hasClass('thread-sorted'))
+					$list.addClass('thread-sorted');
+					
 				coms.sort(function(a,b) {
-					var ca = parseInt($(a).attr('data-comment-index'));
-					var cb = parseInt($(b).attr('data-comment-index'));
+					var ca = parseInt($(a).data('comment-index'));
+					var cb = parseInt($(b).data('comment-index'));
 					return (ca < cb) ? -sort_order: (ca > cb) ? sort_order : 0;
 				});
 				break;
 				
-				case 'by date':
+				case 'by-date':
+				
+				if(!threadTitles.date) {
+					threadTitles.date = [];
+					for(var com in coms) { 
+						var date = $(coms[com]).data('date');
+						if(!threadTitles.date[date]) 
+						{ threadTitles.date[date] = date; } 
+					}
+				}
+				
 				coms.sort(function(a,b) {
-					var ca = $(a).find(".commentmetadata a:first-child").attr('data-stamp');
-					var cb = $(b).find(".commentmetadata a:first-child").attr('data-stamp');
+					var ca = $(a).data('stamp');
+					var cb = $(b).data('stamp');
 					return (ca < cb) ? -sort_order: (ca > cb) ? sort_order : 0;
 				});
 				break;
 				
-				case 'by person': 
+				case 'by-person': 
+				if(!threadTitles.authors) {
+					threadTitles.authors = [];
+					for(var com in coms) { 
+						var title = $(coms[com]).find('.message-username').first();
+						if(!threadTitles.authors[title.text()]) 
+						{ threadTitles.authors[title.text()] = title.text(); } 
+					}
+				}
+				
 				coms.sort(function(a,b) {
-					var ca = $(a).find(".comment-author cite.fn").text().toLowerCase();
-					var cb = $(b).find(".comment-author cite.fn").text().toLowerCase();
+					var ca = $(a).find(".message-username").text().toLowerCase();
+					var cb = $(b).find(".message-username").text().toLowerCase();
 					return (ca < cb) ? -sort_order: (ca > cb) ? sort_order : 0;
 				});
 				break;
 				
-				case 'by knowledge type':
+				case 'by-knowledge-type':
+				if(!threadTitles.knowledgeTypes) {
+					threadTitles.knowledgeTypes = [];
+					for(var com in coms) { 
+						var title = $(coms[com]).find('.message-type').first();
+						if(!threadTitles.knowledgeTypes[title.data('type')]) 
+						{ threadTitles.knowledgeTypes[title.data('type')] = title.text(); } 
+					}
+				}
+				
 				coms.sort(function(a,b) {
-					var ca = $(a).find(".kbtype-label span").html();
-					var cb = $(b).find(".kbtype-label span").html();
+					var ca = $(a).data('type');
+					var cb = $(b).data('type');
 					return (ca < cb) ? -sort_order: (ca > cb) ? sort_order : 0;
 				});
 				break;
 			}
-		   $.each(coms,function(idx,itm) { $("#comment-frame").append(itm); });
+			$.each(coms,function(idx,itm) { $("#comment-frame").append(itm); });
 		   
+			if(type == 'by-knowledge-type') {
+				$('.thread-title-knbu').show();
+				if($('.thread-title-knbu').length == 0) {
+					for(var key in threadTitles.knowledgeTypes) {
+						var name = threadTitles.knowledgeTypes[key];
+						
+						if(!key || key.length == 0) 
+							name = 'Unspecified';
+							
+						var $title = $('<h3>');
+						$title.text(name);
+						$title.attr('data-type', key);
+						$title.addClass('thread-title thread-title-knbu');
+						
+						$title.insertBefore($('.message-type[data-type="'+key+'"]').first().closest('.knbu-comment'));
+					}
+				}
+				else {
+					$('.thread-title-knbu').each(function() {
+						$(this).insertBefore($('.message-type[data-type="'+$(this).data('type')+'"]').first().closest('.knbu-comment'));
+					});
+				}
+			}
+			else if(type == 'by-person') {
 
-			 $("#comment_sorter li").css("font-weight","normal");
-			 $target.css("font-weight","bold");
+				$('.thread-title-author').show();
+				if($('.thread-title-author').length == 0) {
+					for(var key in threadTitles.authors) {
+						var name = threadTitles.authors[key];
+						
+						if(!key || key.length == 0) 
+							name = 'Unspecified';
+							
+						var $title = $('<h3>');
+						$title.text(name);
+						
+						$title.addClass('thread-title thread-title-author');
+						
+						$title.insertBefore($('.message-username:contains("'+key+'")').first().closest('.knbu-comment'));
+					}
+				}
+				else {
+					$('.thread-title-author').each(function() {
+						$(this).insertBefore($('.message-username:contentIs("'+$(this).html()+'")').first().closest('.knbu-comment'));
+					});
+				}
+			}
+			else if(type == 'by-date') {
+
+				$('.thread-title-date').show();
+				if($('.thread-title-date').length == 0) {
+					for(var key in threadTitles.date) {
+						var name = threadTitles.date[key];
+						
+						if(!key || key.length == 0) 
+							name = 'Unspecified';
+							
+						var $title = $('<h3>');
+						$title.text(name);
+						
+						$title.addClass('thread-title thread-title-date');
+						
+						$title.insertBefore($('.message-date:contains("'+key+'")').first().closest('.knbu-comment'));
+					}
+				}
+				else {
+					$('.thread-title-date').each(function() {
+						$(this).insertBefore($('.message-date:contains("'+$(this).html()+'")').first().closest('.knbu-comment'));
+					});
+				}
+			}
+
+			 $("#comment_sorter li").removeClass('selected');
+			 $target.addClass('selected');
 			 
 			 
-			 cur_sort=$target.html();
+			 cur_sort = type;
 		   //console.timeEnd('total');
 		 });
 

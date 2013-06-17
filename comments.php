@@ -1,5 +1,5 @@
 
-<p class="thread-sorted"><?php knbu_list_comments(); ?></p>
+<div><?php knbu_list_comments(); ?></div>
 <br>
 <div id="respond">
 	<h3 id="reply-title">Leave a Reply</h3>
