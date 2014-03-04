@@ -18,12 +18,12 @@ $replies = get_comments(array(
 		<div id="raven"></div>
 		<div id="fps"></div>
 		<div id="grouping">
-			<ul>
-				<li><a id="grouping-byknowledgetypes">Group by knowledge types</a></li>
-				<li><a id="grouping-byauthors">Group by authors</a></li>
-				<li><a id="grouping-discussion">Discussion</a></li>
-				<li><a id="grouping-time">Time</a></li>
-			</ul>
+			Show notes: <select id="grouping-select">
+				<option value="discussion">as discussion</option>
+				<option value="knowledgetypes">by knowledge types</option>
+				<option value="users">by authors</option>
+				<option value="time">by time</option>
+			</select>
 		</div>
 		<div id="navigation">
 			<img src="<?php echo plugins_url('knowledge-building'); ?>/images/toggle-hide.png" width="15" height="15" id="navi-toggle-button">
@@ -35,11 +35,6 @@ $replies = get_comments(array(
 					<img src="<?php echo plugins_url(); ?>/knowledge-building/images/arrow-right.png" class="arrow" id="arrow-right">
 					<img src="<?php echo plugins_url(); ?>/knowledge-building/images/arrow-down.png" class="arrow" id="arrow-down">
 					<img src="<?php echo plugins_url(); ?>/knowledge-building/images/center.png" class="arrow" id="arrow-center">
-					<!-- <div class="left"></div>
-					<div class="right"></div>
-					<div class="up"></div>
-					<div class="down"></div>
-					<div class="center"></div> -->
 				</div>
 				+<div id="zoom"></div>-
 			</div>
@@ -80,7 +75,8 @@ function knbu_get_childs($id, $replies) {
 					'avatar' => knbu_get_avatar_url( $post->user_id ),
 					'username' => get_the_author_meta( 'display_name', $post->post_author ),
 					'email' => $post->user_email,
-					'date' => date(get_option('date_format').' '.get_option('time_format'), strtotime($post->post_date)),
+					'date' => date(get_option('date_format'), strtotime($post->post_date)),
+					'time' => date(get_option('time_format'), strtotime($post->post_date)), 
 					'timestamp' => strtotime( $post->post_date ),
 					'typeName' => 'Start',
 					'title' => $post->post_title,

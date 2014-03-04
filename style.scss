@@ -1,5 +1,22 @@
 /* Style definition for knowledge building. */
 
+@mixin gradient($color1, $color2) {
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($color1), to($color2));
+  background: -webkit-linear-gradient(top, $color1, $color2);
+  background: -moz-linear-gradient(top, $color1, $color2);
+  background: -ms-linear-gradient(top, $color1, $color2);
+  background: -o-linear-gradient(top, $color1, $color2);
+ }
+ 
+ @mixin gradient_stops($color1, $color2, $color3, $color4) {
+  background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0%, $color1), color-stop(48%, $color2), color-stop(52%, $color3), color-stop(100%, $color4));
+  background-image: -webkit-linear-gradient(top, $color1 0%, $color2 48%, $color3 52%, $color4 100%);
+  background-image: -moz-linear-gradient(top, $color1 0%, $color2 48%, $color3 52%, $color4 100%);
+  background-image: -ms-linear-gradient(top, $color1 0%, $color2 48%, $color3 52%, $color4 100%);
+  background-image: -o-linear-gradient(top, $color1 0%, $color2 48%, $color3 52%, $color4 100%);
+  background-image: linear-gradient(top, $color1 0%, $color2 48%, $color3 52%, $color4 100%);
+}
+
 div.kbtype-label {
     font-size: 150%;
 }
@@ -9,30 +26,81 @@ div.kbtype-label {
     padding: 0.3em;
 }
 
-#comment_sorter {
-	margin-bottom: 10px;
+.knbu-comment form p { margin: 0; padding: 0; }
+
+.thread-title {
+	margin: 30px 0 20px 0;
+}
+
+#grouping {
+	color: #fff;
+	font-size: 1.1em;
+}
+
+#grouping-select {
+	padding: 8px;
+	background-color: rgba(0,0,0,0.5);
+	color: #fff;
+	border: 1px solid #555;
+	border-radius: 4px;
+	font-size: 1.1em;
+	font-family: inherit;
 	
-	ul {
-	  display: inline-block;
-	  margin: 0;
-	  padding: 0.5em;
-	  
-	  
-		 li { 
-		  display: inline;
-		  margin: 0.1em;
-		  padding: 0.5em;
-		  color: black;
-		  background-color: #ccc;
-		  cursor: pointer;
-		  
-		  &:hover { background-color: #bbb; }
-		  &:active { background-color: #aaa; }
-		}
+	option {
+		background-color: rgba(0,0,0,0.9);
 	}
 }
+
+
+#comment_sorter {
+	margin-bottom: 10px;
+	padding: 10px;
+	
+	ul {
+	  margin-left: 0;
+	  width: 100%;
+	}
+	
+	 li { 
+		position: relative;
+		display: inline-block;
+		margin: 0.1em;
+		padding: 0.4em 0.6em;
+		padding-right: 18px;
+		color: black;
+		background-color: #ccc;
+		cursor: pointer;
+		border-radius: 3px;
+		border: 1px solid #aaa;
+		@include gradient_stops(#eeeeee, #e0e0e0, #d4d3d3, #c2c2c2);
+		&:hover { opacity: 0.8; }
+		&:active { @include gradient_stops(#c2c2c2, #d4d3d3, #d4d3d3, #d4d3d3 ); }
+
+		.sort-up, .sort-down { width: 8px; height: 5px; position: absolute; display: none; }
+		
+		.sort-up { top: 25%; right: 3px; }
+		.sort-down { top: 55%; right: 3px; }
+	}
+	
+	li.selected { font-weight: bold; img { display: inline-block; } }
+	li:first-child img { display: none; } 
+}
+
+#map-frame {
+	margin-top: 30px;
+	img { height: 100%; display: inline-block; float: left; }
+	span { line-height: 100px; float: left; }
+	a {
+		height:100px;
+		background-position: center center;
+		font-size: 2em;
+		text-decoration: none;
+		display: block;
+	}
+}
+
 .comment {
-	margin-top: 0.25em;
+	margin-top: 0.5em;
 	list-style-type: none;
 	
 	.comment-body {
@@ -44,11 +112,12 @@ div.kbtype-label {
 }
 
 .thread-sorted {
-	.depth-1 { margin-left: 25px; margin-top: 1.5em; }
-	.depth-2 { margin-left: 50px; }
-	.depth-3 { margin-left: 75px; }
-	.depth-4 { margin-left: 100px; }
-	.depth-5 { margin-left: 125px; }
+	$m: 40px;
+	.depth-1 { margin-left: $m * 1; margin-top: 1.5em; }
+	.depth-2 { margin-left: $m * 2; }
+	.depth-3 { margin-left: $m * 3; }
+	.depth-4 { margin-left: $m * 4; }
+	.depth-5 { margin-left: $m * 5; }
 }
 
 .knbu-form {
@@ -81,6 +150,16 @@ div.kbtype-label {
 		width: 50%;
 		float: left;
 	}
+}
+
+.knbu-form-link { 
+	margin-top: 10px; 
+	display: block; 
+	float: left;
+	cursor: pointer; 
+	padding: 5px; 
+	text-decoration: none;
+	&:hover, &:active { text-decoration: underline; }
 }
 
 .knbu-map-view { 
@@ -123,93 +202,7 @@ div.kbtype-label {
 		padding: 20px; 
 	}
 
-	#message { 
-		position: absolute;
-		background-color: rgba(255, 255, 255, 0.93);
-		width: 50%;
-		min-width: 400px;
-		max-width: 600px;
-		border-radius: 2px;
-		box-shadow: 8px 8px 2px rgba(0,0,0,0.3);
-		display: none;
-		margin: 10px;
-		border: 1px solid #444;
-		
-		h3 {
-			margin: 0; 
-			padding: 0; 
-			margin-bottom: 8px;
-		}
-		h4 {
-			clear: none !important;
-		}
-		
-		.message-header {
-			line-height: 30px;
-			padding: 0 10px;
-			overflow: hidden;
-			position: relative;
-			h4 { 
-				font-size: 1.1em;
-				white-space: nowrap;
-				display: inline;
-			}
-		}
-		
-		.user {
-			float: right; 
-			vertical-align: middle;
-		}
-		
-		.message-content-wrapper {
-			padding: 8px; 
-		}
-		
-		.message-meta {
-			float: left;
-			margin: 0 5px 5px 0;
-		}
-		
-		.message-avatar { 
-			width: 25px;
-			height: 25px;
-			background-size: 100% 100%;
-			display: inline-block;
-			padding-top: 5px;
-			float: right;
-		}
-		
-		.message-username {
-			float: right;
-			vertical-align: middle;
-			padding: 0 10px;
-		}
-		
-		.message-date {
-			float: right;
-		}
-		
-		.message-content { 
-			background-color: #f5f5f5;
-			padding: 8px;
-			white-space: pre-wrap;
-			word-wrap: break-word;
-			line-height: 1.4em;
-			border: 0;
-			
-			img { max-width: 100%; }
-		}
-
-		.message-type { 
-			margin: 0; 
-		}
-		
-		p { margin: 10px; }
-			
-		textarea { 
-			font-family: inherit; 
-		}
-	}
+	
 	
 	#map { 
 		position: fixed; 
@@ -260,24 +253,12 @@ div.kbtype-label {
 			
 			cursor: pointer;
 		}
-		li {
-		}
 	}
 	
 	
 	
 	tspan:nth-child(1) {
 		font-size: 1.5em;
-	}
-
-	.knbu-form-link { 
-		margin-top: 10px; 
-		display: block; 
-		float: left;
-		cursor: pointer; 
-		padding: 5px; 
-		text-decoration: none;
-		&:hover, &:active { text-decoration: underline; }
 	}
 
 	#message .logged-in-as { 
@@ -378,4 +359,97 @@ div.kbtype-label {
 			}
 		}
 	}
+}
+.knbu-comment, #message {
+h3 {
+		margin: 0; 
+		padding: 0; 
+		margin-bottom: 8px;
+	}
+	h4 {
+		clear: none !important;
+	}
+	
+	.message-header {
+		line-height: 30px;
+		padding: 0 10px;
+		overflow: hidden;
+		position: relative;
+		h4 { 
+			font-size: 1.1em;
+			white-space: nowrap;
+			display: inline;
+		}
+	}
+	
+	.user {
+		float: right; 
+		vertical-align: middle;
+	}
+	
+	.message-content-wrapper {
+		padding: 8px; 
+	}
+	
+	.message-meta {
+		float: left;
+		margin: 0 5px 5px 0;
+	}
+	
+	.message-avatar { 
+		width: 25px;
+		height: 25px;
+		background-size: 100% 100%;
+		display: inline-block;
+		padding-top: 5px;
+		float: right;
+	}
+	
+	.message-username {
+		float: right;
+		vertical-align: middle;
+		padding: 0 10px;
+	}
+	
+	.message-date {
+		float: right;
+	}
+	
+	.message-content { 
+		background-color: #f5f5f5;
+		padding: 8px;
+		white-space: pre-wrap;
+		word-wrap: break-word;
+		line-height: 1.4em;
+		border: 0;
+		
+		img { max-width: 100%; }
+	}
+
+	.message-type { 
+		margin: 0; 
+	}
+	
+	p { margin: 10px; }
+		
+	textarea { 
+		font-family: inherit; 
+	}
+}
+
+.knbu-comment {
+	box-shadow: 2px 2px 2px rgba(0,0,0,0.2); 
+}
+
+#message { 
+	position: absolute;
+	background-color: rgba(255, 255, 255, 0.93);
+	width: 50%;
+	min-width: 400px;
+	max-width: 600px;
+	border-radius: 2px;
+	box-shadow: 8px 8px 2px rgba(0,0,0,0.3);
+	display: none;
+	margin: 10px;
+	border: 1px solid #444;
 }
